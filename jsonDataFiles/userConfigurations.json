@@ -1,0 +1,20 @@
+{
+  "vocabularyName": "VoColDoCo",
+  "server": "https://vocol.iais.fraunhofer.de/test/",
+  "adminUserName": "admin",
+  "adminPass": "$2a$10$9P60uM0epWxQNg3j0kR0T.OzWlh8LL71Ckt9QIwUjC1gu/3GD3Xs2",
+  "repositoryURL": "https://github.com/vocol/mobivoc",
+  "repositoryOwner": "ahemaid",
+  "repositoryName": "vocotest",
+  "branchName": "master",
+  "user": "vocol",
+  "password": "U2FsdGVkX182We9SUubOQZjzU12mgEwHzzKRrC+A2ag=",
+  "repositoryService": "gitHub",
+  "repositoryType": "public",
+  "visualization": "true",
+  "sparqlEndPoint": "true",
+  "documentationGeneration": "true",
+  "loginUserName": "",
+  "loginPassword": "$2b$10$tlPZjgh2mEOkkUokdykb8utMwHPUdng2jPeWaskv3ePOx2MqbrjKK",
+  "text": ""
+}
