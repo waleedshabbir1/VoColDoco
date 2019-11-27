@@ -1,12 +1,12 @@
 VoColDoco
 
-**[To run web server]
+**[To run web server]**
 ```
 
 npm start 
 ```
 
-**To run Sparql Endpoint
+**To run Sparql Endpoint**
 ```
 
 cd helper/tools/apache-jena-fuseki/
