@@ -4,12 +4,33 @@
     <div class="ui segment" style="padding-top: 1cm;padding-bottom: 0px;">
       <div class="ui form">
         <div class="three fields" style="margin-bottom: 0px;padding-left: 6.5%;">
+          <div class="ui modal editmodal">
+            <i class="close icon"></i>
+            <div class="ui input">
+              <label for="editinput">editinput</label>
+              <input id="editinput" type="text">
+              <span id="predicate_value">
+
+              </span>
+              <span id="obj_value">
+
+              </span>
+            </div>
+            <div class="actions">
+              <div class="ui black deny button">
+                Cancel
+              </div>
+              <div class="ui positive right labeled icon button">
+                Change
+                <i class="checkmark icon"></i>
+              </div>
+            </div>
+          </div>
           <div class="twelve wide field">
             <div class="ui big icon input">
               <label for="input-search" class="sr-only">Search Tree:</label>
               <i class="search icon"></i>
               <input type="input" id="input-search" placeholder="Type a concept to search..." value="">
-
             </div>
           </div>
           <div class="three wide field">
@@ -556,7 +577,7 @@
                         // since RDFS checkbox is clicked by default
                         RDFSData = result;
                         currentTreeData = result;
-                        debugger
+                        // debugger
 
                         execQuery(individualsQuery(fromInQuery), "Individuals").then(function (
                         res) {
@@ -2314,6 +2335,7 @@
                           '<tr class="positive">' +
                           '<th>Predicate</th>' +
                           '<th>' + objectOrSubject + '</th>' +
+                          '<th>Edit</th>' +
                           '</tr>';
                         var rangeTable = '<table class="ui yellow celled striped table" style="table-layout:fixed;" >' +
                           '<colgroup> <col class="col-md-6"> </colgroup>' +
@@ -2326,24 +2348,42 @@
                           '<th>Used on these types</th>' +
                           '</tr>';
 
+                        console.log(dataSPARQL)
+
                         for (var i = 0; i < dataSPARQL.length; i++) {
                           var key1 = trimHash(replaceWithRDFType(trimSlash(dataSPARQL[i]['p'].value)));
                           var key2 = dataSPARQL[i]['o'].value;
                           var key2URI = key2;
                           var key3 = "";
+
+                          var predicate_value = dataSPARQL[i]['p'].value
+                          var obj_value = dataSPARQL[i]['o'].value
+
+                          // key1     =  predicate part 
+                          // key2     =  object part
+                          // key2URI  =  url to the object
+                          // key3     =  language of literal
+                          // key4     =  type of object ?
+
+
+
+
                           if (dataSPARQL[i]['o'].hasOwnProperty("xml:lang"))
                             key3 = dataSPARQL[i]['o']['xml:lang'];
+
                           var key4 = dataSPARQL[i]['o']['type'];
 
-                          if ((key2.includes("http://") || key2.includes("https://")) && key4 === "literal") {
-                            if (key2[key2.length - 1] === ('/'))
+                          // remove "/" if end in "/"
+                          if (key2[key2.length - 1] === ('/'))
                               key2 = key2.slice(0, -1);
+
+                          // make object part a link if it's an URL
+                          if ((key2.includes("http://") || key2.includes("https://")) && key4 === "literal") {
                             key2 = '<a href=' + key2 + '>' + key2 + '</a>';
                           } else {
-                            if (key2[key2.length - 1] === ('/'))
-                              key2 = key2.slice(0, -1);
                             key2 = trimHash(replaceWithRDFType(trimSlash(key2)));
                           }
+
                           // create an array with nodes for graph visualization
                           if (key3) {
                             nodes.push({
@@ -2356,8 +2396,8 @@
                               label: key2
                             });
                           }
-                          // create an array with edges for graph visualization
 
+                          // create an array with edges for graph visualization
                           edges.push({
                             from: 1,
                             to: i + 2,
@@ -2369,51 +2409,67 @@
 
                           if (key1.includes("domain")) {
                             conceptHasDomain = key1;
-                            if (isConceptInside(key2) && key4 === "uri")
+                            if (isConceptInside(key2) && key4 === "uri") {
                               key2 = '<a href="#" onmousedown="getConceptInfo(&quot;' + key2 +
                               '&quot;); return false; ">' + key2 +
                               '</a>';
-                            else if (!isOWLIndividiual(key2) && !isConceptInside(key2) && key4 === "uri")
+                            } else if (!isOWLIndividiual(key2) && !isConceptInside(key2) && key4 === "uri"){
                               key2 = '<a href="#" onmousedown="showExternalInfo(&quot;' + key2 +
                               '&quot;); return false; ">' + key2 +
                               '</a>';
+                            }
                             domainTable += '<tr>    <td>' + key2 + '</td>  </tr>';
                           } else if (key1.includes("range")) {
                             conceptHasRange = key1;
-                            if (isConceptInside(key2) && key4 === "uri")
+                            if (isConceptInside(key2) && key4 === "uri") {
                               key2 = '<a href="#" onmousedown="getConceptInfo(&quot;' + key2 +
                               '&quot;); return false; ">' + key2 +
                               '</a>';
-                            else if (!isOWLIndividiual(key2) && !isConceptInside(key2) && key4 === "uri")
+                            } else if (!isOWLIndividiual(key2) && !isConceptInside(key2) && key4 === "uri") {
                               key2 = '<a href="#" onmousedown="showExternalInfo(&quot;' + key2 +
                               '&quot;); return false; ">' + key2 +
                               '</a>';
+                            }
                             rangeTable += '<tr>    <td>' + key2 + '</td>  </tr>';
-                          } else {
+
+                          } else { // not a domain or range
+                            
                             if (key1.includes("broader") || key1.includes("narrower")) {
                               key2 = '<a href="#" onmousedown="getConceptInfo(&quot;' + key2URI +
                                 '&quot;,&quot;SKOS&quot;); return false; ">' + key2 + '</a>';
                             } else if (isOWLIndividiual(key2) && !key1.includes("label") && key4 === "uri") {
                               key2 = '<a href="#" onclick="showInstanceDetails(&quot;' + key2URI + '&quot;); ">' +
                                 key2 + '</a>';
-                            } else if (!isOWLIndividiual(key2) && !isConceptInside(key2) && !key1.includes("label") &&
-                              key4 ===
-                              "uri") {
+                            } else if (!isOWLIndividiual(key2) && !isConceptInside(key2) && !key1.includes("label") && key4 === "uri") {
                               key2 = '<a href="#" onmousedown="showExternalInfo(&quot;' + key2 +
                                 '&quot;); return false; ">' + key2 +
                                 '</a>';
                             }
+                            
                             if (isConceptInside(key2) && !key1.includes("label") && key4 === "uri") {
                               key2 = '<a href="#" onmousedown="getConceptInfo(&quot;' + key2 +
                                 '&quot;); return false; ">' + key2 +
                                 '</a>';
                             }
+
                             if (key3 && key4 === "literal") {
                               key2 = key2 + '@' + key3;
                             }
-                            table += '<tr><td>' + key1 + '</td>    <td>' + key2 + '</td>  </tr>';
+                            
+                            // making row entry in the table
+                            // console.log('editF(' + predicate_value + ',' + obj_value + ')"')
+                            // predicate_value = str(predicate_value)
+                            // obj_value = str(obj_value)
+                            // console.log(predicate_value)
+                            // console.log(obj_value)
+                            // console.log(typeof(predicate_value))
+                            // console.log(typeof(obj_value))
+                            predicate_value = "'" + predicate_value + "'"
+                            obj_value = "'" + obj_value + "'"
+                            editButton = '<button class="ui button" onclick="editF(' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                            table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                           }
-                        }
+                        } // end of table entities loop
 
                         // close HTML tables with thier tags
                         table += '</table> ';
@@ -2613,7 +2669,13 @@
                         fitNetworkFirstTime = false;
                       });
 
-                    }
+                    } // End Of render()
+
+                    function editF(predicate_value, obj_value) {
+                      $("#predicate_value").text(predicate_value)
+                      $("#obj_value").text(obj_value)
+                      $('.ui.modal.editmodal').modal('show');
+                    };
 
                     // Call when document is ready
                     $(document).ready(function (e) {
