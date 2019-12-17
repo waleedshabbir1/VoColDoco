@@ -482,7 +482,6 @@ function replaceWithRDFType(RDFType) {
     return trim(RDFType);
 }
 
-
 function uniquefileNames(array) {
   var out = [];
   var sl = array;
@@ -517,7 +516,6 @@ function SortConcepts(x, y) {
       1 : -1));
 }
 
-
 // filter external classes
 function filterExternalConcept(RDFObjects) {
   var out = [];
@@ -549,7 +547,6 @@ function findURI(array, item) {
   }
   return array[i].URI;
 }
-
 
 router.get(['/', '/:instanceID/:branchName'], function(req, res) {
   if (!req.session.isAuthenticated && req.app.locals.authRequired)
@@ -787,6 +784,5 @@ router.get(['/', '/:instanceID/:branchName'], function(req, res) {
   // });
   }
 });
-
 
 module.exports = router;
