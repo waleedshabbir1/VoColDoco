@@ -1,31 +1,37 @@
+<div class="ui large modal editmodal">
+  <div class="header">
+      Editor
+  </div>
+  <div class="content">
+    <div class="description">
+      <div class="ui header">Edit value</div>
+        <div class="ui input">
+            <table class="ui green celled striped table" style="table-layout:fixed;">
+              <tr class="positive"><th>Predicate</th><th>Object</th></tr>
+              <tr>
+                <td><input style="width: 100%;" id="predicate_value" type="text"></td>
+                <td><input style="width: 100%;" id="obj_value" type="text"></td>
+              </tr>
+            </table>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <div class="ui black deny button">
+      Cancel
+    </div>
+    <div class="ui positive right labeled icon button" onclick="changeRDF()">
+      Change
+      <i class="checkmark icon"></i>
+    </div>
+  </div>
+</div>
 <% include header %>
 <div class="ui grid">
   <div class="ui container" style="padding-bottom : 1cm;">
     <div class="ui segment" style="padding-top: 1cm;padding-bottom: 0px;">
       <div class="ui form">
         <div class="three fields" style="margin-bottom: 0px;padding-left: 6.5%;">
-          <div class="ui modal editmodal">
-            <i class="close icon"></i>
-            <div class="ui input">
-              <label for="editinput">editinput</label>
-              <input id="editinput" type="text">
-              <span id="predicate_value">
-
-              </span>
-              <span id="obj_value">
-
-              </span>
-            </div>
-            <div class="actions">
-              <div class="ui black deny button">
-                Cancel
-              </div>
-              <div class="ui positive right labeled icon button">
-                Change
-                <i class="checkmark icon"></i>
-              </div>
-            </div>
-          </div>
           <div class="twelve wide field">
             <div class="ui big icon input">
               <label for="input-search" class="sr-only">Search Tree:</label>
@@ -228,7 +234,28 @@
                   <!-- End of expressJS coding-->
 
                   <!-- Start of javascript coding-->
+
+                  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
                   <script>
+                    var socket = io('http://localhost:3060');
+                    if(socket){
+                      console.log(socket);
+                    }
+                    else{
+                      console.log("client socket not connected");
+                    }
+
+
+                    
+			   
+                    socket.emit('connectedToServer');
+			 
+                    //when we receive msg from server, do this
+                    socket.on('servermessage', function(data){
+                      console.log(data);
+                      alert(data);
+                    });
+               
                     // get all the data from route.tree.js
                     var RDFSData = [];
                     var SKOSData = [];
@@ -2299,7 +2326,7 @@
                           success: function (data, response, jqXHR) {
                             var result = JSON.parse(data)
                             if (result != null) {
-                              render(result)
+                              render(result, sparql)
                             }
                           }
                         })
@@ -2310,7 +2337,13 @@
                     }
                     var justOneTimeExectuted = false;
                     // Function to display data in tables on the page
-                    function render(json) {
+                    function render(json, vocoldoco_query=null) {
+                      // debugger;
+
+                      global_var_rdf = json;
+                      console.log(vocoldoco_query);
+                      console.log(json);
+
                       var objectOrSubject = "Object";
                       var dataSPARQL = json.results.bindings;
                       // check for spec case of skos concepts
@@ -2348,8 +2381,6 @@
                           '<th>Used on these types</th>' +
                           '</tr>';
 
-                        console.log(dataSPARQL)
-
                         for (var i = 0; i < dataSPARQL.length; i++) {
                           var key1 = trimHash(replaceWithRDFType(trimSlash(dataSPARQL[i]['p'].value)));
                           var key2 = dataSPARQL[i]['o'].value;
@@ -2364,8 +2395,6 @@
                           // key2URI  =  url to the object
                           // key3     =  language of literal
                           // key4     =  type of object ?
-
-
 
 
                           if (dataSPARQL[i]['o'].hasOwnProperty("xml:lang"))
@@ -2456,14 +2485,6 @@
                               key2 = key2 + '@' + key3;
                             }
                             
-                            // making row entry in the table
-                            // console.log('editF(' + predicate_value + ',' + obj_value + ')"')
-                            // predicate_value = str(predicate_value)
-                            // obj_value = str(obj_value)
-                            // console.log(predicate_value)
-                            // console.log(obj_value)
-                            // console.log(typeof(predicate_value))
-                            // console.log(typeof(obj_value))
                             predicate_value = "'" + predicate_value + "'"
                             obj_value = "'" + obj_value + "'"
                             editButton = '<button class="ui button" onclick="editF(' + predicate_value + ',' + obj_value + ')">Edit</button>';
@@ -2671,16 +2692,26 @@
 
                     } // End Of render()
 
+
+                    var global_var_rdf = null;
+
                     function editF(predicate_value, obj_value) {
-                      $("#predicate_value").text(predicate_value)
-                      $("#obj_value").text(obj_value)
+                      $("#predicate_value").val(predicate_value);
+                      $("#predicate_value").data("old", predicate_value);
+                      $("#obj_value").val(obj_value);
                       $('.ui.modal.editmodal').modal('show');
                     };
 
-                    function makeChanges(predicate_value_old, predicate_value_new, obj_value_old, obj_value_new) {
-                      $("#predicate_value").text(predicate_value)
-                      $("#obj_value").text(obj_value)
-                      $('.ui.modal.editmodal').modal('show');
+                    function changeRDF() {
+                      var old_predicate_value = $("#predicate_value").data("old");
+                      var predicate_value = $("#predicate_value").val(predicate_value);
+                      var obj_value = $("#obj_value").val(obj_value);
+
+                      // delete global_var_rdf[]
+
+                      for (var i = 0; i < global_var_rdf.length; i++) {
+                        
+                      }
                     };
 
                     // Call when document is ready

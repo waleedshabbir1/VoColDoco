@@ -17,6 +17,27 @@ var escapeHtml = require('escape-html');
 var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
   '/dataset/sparql';
 
+
+// Socket io
+var server = require('http').createServer(app); 
+var io = require('socket.io')(server); 
+
+
+// when a client connects, do this
+io.on('connection', function(client) {  
+  console.log('Client connected...');
+
+
+  client.on('connectedToServer', function(data) {
+    //send a message to ALL connected clients
+    msg = 'This message is returned by server'
+    io.emit('servermessage', msg);
+  });
+  
+});
+
+io.listen(3060);
+
 // to re-write the namedgraph lists to be added to the query
 var namedGraphsString4Qurery = "";
 var RDFConceptsJson = [];

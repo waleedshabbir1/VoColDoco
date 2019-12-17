@@ -22,6 +22,7 @@
     "semantic-ui": "^2.3.3",
     "serve-favicon": "^2.5.0",
     "shelljs": "^0.7.8",
+    "socket.io": "^2.3.0",
     "sparql-client": "^0.2.0"
   },
   "devDependencies": {
