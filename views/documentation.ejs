@@ -4,9 +4,9 @@
   </div>
   <div class="content">
     <div class="description">
-      <div class="ui header">Edit value</div>
+      <div class="ui header editHeader">Edit value</div>
         <div class="ui input">
-            <table class="ui green celled striped table" style="table-layout:fixed;">
+            <table class="ui green celled striped table" style="height: auto;">
               <tr class="positive"><th>Predicate</th><th>Object</th></tr>
               <tr>
                 <td><input style="width: 100%;" id="predicate_value" type="text"></td>
@@ -2338,11 +2338,18 @@
                     var justOneTimeExectuted = false;
                     // Function to display data in tables on the page
                     function render(json, vocoldoco_query=null) {
-                      // debugger;
+                      
+                      item_name = currentSelectedConcept;
+
+                      if (item_name.includes("http://") || item_name.includes(
+                          "https://")) { //check if it skosURI
+                        item_name = trimHash(trimSlash(item_name));
+                      }
 
                       global_var_rdf = json;
                       console.log(vocoldoco_query);
                       console.log(json);
+                      console.log(item_name);
 
                       var objectOrSubject = "Object";
                       var dataSPARQL = json.results.bindings;
@@ -2395,7 +2402,6 @@
                           // key2URI  =  url to the object
                           // key3     =  language of literal
                           // key4     =  type of object ?
-
 
                           if (dataSPARQL[i]['o'].hasOwnProperty("xml:lang"))
                             key3 = dataSPARQL[i]['o']['xml:lang'];
@@ -2484,10 +2490,14 @@
                             if (key3 && key4 === "literal") {
                               key2 = key2 + '@' + key3;
                             }
+
+                            data_part = 'data-s="' + item_name + '"' + 
+                                        'data-p="' + predicate_value + '"' + 
+                                        'data-o="' + obj_value + '"';
                             
                             predicate_value = "'" + predicate_value + "'"
                             obj_value = "'" + obj_value + "'"
-                            editButton = '<button class="ui button" onclick="editF(' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                            editButton = '<button '+data_part+' class="ui button" onclick="editF(' + predicate_value + ',' + obj_value + ')">Edit</button>';
                             table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                           }
                         } // end of table entities loop
