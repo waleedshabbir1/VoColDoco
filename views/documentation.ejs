@@ -1,31 +1,4 @@
-<div class="ui large modal editmodal">
-  <div class="header">
-      Editor
-  </div>
-  <div class="content">
-    <div class="description">
-      <div class="ui header editHeader">Edit value</div>
-        <div class="ui input">
-            <table class="ui green celled striped table" style="height: auto;">
-              <tr class="positive"><th>Predicate</th><th>Object</th></tr>
-              <tr>
-                <td><input style="width: 100%;" id="predicate_value" type="text"></td>
-                <td><input style="width: 100%;" id="obj_value" type="text"></td>
-              </tr>
-            </table>
-      </div>
-    </div>
-  </div>
-  <div class="actions">
-    <div class="ui black deny button">
-      Cancel
-    </div>
-    <div class="ui positive right labeled icon button" onclick="changeRDF()">
-      Change
-      <i class="checkmark icon"></i>
-    </div>
-  </div>
-</div>
+
 <% include header %>
 <div class="ui grid">
   <div class="ui container" style="padding-bottom : 1cm;">
@@ -229,6 +202,35 @@
 </div>
 
 
+<div class="ui large modal editmodal" style="height: 50%;">
+    <div class="header">
+        Editor
+    </div>
+    <div class="content">
+      <div class="description">
+        <div class="ui header editHeader">Edit value</div>
+          <div class="ui input" style="width: 100%;">
+              <table class="ui green celled striped table">
+                <tr class="positive"><th>Predicate</th><th>Object</th></tr>
+                <tr>
+                  <td><input style="width: 100%;" id="predicate_value" type="text"></td>
+                  <td><input style="width: 100%;" id="obj_value" type="text"></td>
+                </tr>
+              </table>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <div id="cancel" class="ui black deny button">
+        Cancel
+      </div>
+      <div class="ui positive right labeled icon button" onclick="changeRDF()">
+        Change
+        <i class="checkmark icon"></i>
+      </div>
+    </div>
+  </div>
+
 
     <% include footer %>
                   <!-- End of expressJS coding-->
@@ -253,9 +255,10 @@
                     //when we receive msg from server, do this
                     socket.on('servermessage', function(data){
                       console.log(data);
-                      alert(data);
+                      // alert(data);
                     });
                
+                    var editableOntologies = {};
                     // get all the data from route.tree.js
                     var RDFSData = [];
                     var SKOSData = [];
@@ -2495,10 +2498,21 @@
                                         'data-p="' + predicate_value + '"' + 
                                         'data-o="' + obj_value + '"';
                             
+                            subject_value =  "'" + item_name + "'"
                             predicate_value = "'" + predicate_value + "'"
                             obj_value = "'" + obj_value + "'"
-                            editButton = '<button '+data_part+' class="ui button" onclick="editF(' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                            
+
+                            if(editableOntologiesClient[item_name+i]){
+                              editButton = '<button '+data_part+' id='+item_name+i+' disabled class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ',' +i+ ')">Edit</button>';
                             table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
+
+                            }
+                            else{
+                              editButton = '<button '+data_part+' id='+item_name+i+' class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ',' +i+ ')">Edit</button>';
+                            table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
+                            }
+
                           }
                         } // end of table entities loop
 
@@ -2705,12 +2719,105 @@
 
                     var global_var_rdf = null;
 
-                    function editF(predicate_value, obj_value) {
+                    function editF(subject_value,predicate_value, obj_value,index_value) {
+
+                      // alert(subject_value);
+                      // alert(predicate_value);
+                      // alert(obj_value);
+                      // alert(index_value);
                       $("#predicate_value").val(predicate_value);
                       $("#predicate_value").data("old", predicate_value);
                       $("#obj_value").val(obj_value);
-                      $('.ui.modal.editmodal').modal('show');
-                    };
+                      $('.ui.modal.editmodal').modal({
+                      closable: false
+                      }).modal('show');
+                      
+                      
+                      // console.log(predicate_value);
+
+                      // if($('#edit_p_o').attr('data-s')==subject_value && $('#edit_p_o').attr('data-p'))
+                      
+                      // var s = $('#edit_p_o').attr('data-s');
+                      // var p = $('#edit_p_o').attr('data-p');
+                      // var o = $('#edit_p_o').attr('data-o');
+  
+                      // console.log(s+p+o);
+                      socket.emit('editClickedLockedClient', subject_value,predicate_value,obj_value,index_value,socket.id);
+			                //  console.log(socket.id);
+
+
+                     
+
+                      $("#cancel").unbind("click").click(function () {
+			                socket.emit('cancelEditClciked', subject_value,predicate_value,obj_value,index_value,socket.id);
+                      });
+                      
+                      setTimeout(function() {
+                        $('#cancel').trigger('click')
+                      console.log("cancel click fired");
+                      },
+                      60000);
+
+
+
+                      };
+
+
+            
+
+
+
+                      socket.on('initialState', function(editableOntologies){
+                      editableOntologiesClient = editableOntologies
+                      console.log('InitialState')
+                      console.log(editableOntologiesClient);
+                      });
+
+
+                      // socket.on('RemovedExpiredOntologies', function(editableOntologies){
+                      // editableOntologiesClient = editableOntologies
+                      // console.log('RemovedExpiredOntologies')
+                      // console.log(editableOntologiesClient);
+                      // });
+                    
+                    
+
+
+                           //when we receive msg from server, do this
+                      socket.on('editClickedLockedServer', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
+                      //  console.log(subject_value);
+                      //  console.log(predicate_value);
+                      //  console.log(obj_value);
+                      //  console.log(index_value);
+                      //  console.log(editableOntologies)
+                      editableOntologiesClient = editableOntologies
+                      console.log('editClickedLockedServer');
+                      console.log(editableOntologiesClient);
+         
+
+                      var buttonId= subject_value+index_value
+                      document.getElementById(buttonId).disabled = true;
+         
+                       });
+
+
+                          socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
+                          //  console.log(subject_value);
+                          //  console.log(predicate_value);
+                          //  console.log(obj_value);
+                          //  console.log(index_value);
+                          //  console.log(editableOntologies)
+                          editableOntologiesClient = editableOntologies
+                          console.log('CancelEditUnlocked');
+                          console.log(editableOntologiesClient);
+         
+
+                          var buttonId= subject_value+index_value
+                          document.getElementById(buttonId).disabled = false;
+         
+                            });
+
+
 
                     function changeRDF() {
                       var old_predicate_value = $("#predicate_value").data("old");

@@ -17,11 +17,17 @@ var escapeHtml = require('escape-html');
 var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
   '/dataset/sparql';
 
+////////////////////////////////////////////
+////////////////////////////////////////////
+// Waleed Code Starts
+///////////////////////////////////////////
 
 // Socket io
 var server = require('http').createServer(app); 
 var io = require('socket.io')(server); 
 
+
+var editableOntologies = {};
 
 // when a client connects, do this
 io.on('connection', function(client) {  
@@ -30,13 +36,93 @@ io.on('connection', function(client) {
 
   client.on('connectedToServer', function(data) {
     //send a message to ALL connected clients
-    msg = 'This message is returned by server'
+    msg = 'A new Client is added'
     io.emit('servermessage', msg);
+    io.emit('initialState',editableOntologies)
+  });
+
+
+
+
+  client.on('editClickedLockedClient', function(subject_value,predicate_value,obj_value,index_value,socket_id) {
+    //send a message to ALL connected clients
+
+    //time expiry adding 1 minute in current time
+    time = Date.now()+ (1000*60); 
+    console.log('element time'+time);
+    var index = subject_value+index_value
+    editableOntologies[index] = {'s':subject_value,'p':predicate_value,'o':obj_value,'index':index_value,'socket_id':socket_id,'time':time};
+    console.log(editableOntologies);
+    io.emit('editClickedLockedServer', subject_value,predicate_value,obj_value,index_value,editableOntologies);
+  });
+
+
+
+
+
+  client.on('cancelEditClciked', function(subject_value,predicate_value,obj_value,index_value,socket_id) {
+    //send a message to ALL connected clients
+
+    var index = subject_value+index_value
+    length =  Object.keys(editableOntologies).length;
+
+    if(length){
+            delete editableOntologies[index];
+    }
+    console.log(editableOntologies);
+    io.emit('cancelEditUnlocked', subject_value,predicate_value,obj_value,index_value,editableOntologies);
   });
   
 });
 
+
+
+
 io.listen(3060);
+
+
+setInterval(function() {
+  
+  var time = Date.now();
+  console.log('hello timer current time'+time);
+  Object.keys(editableOntologies).forEach(function (item) {
+    console.log(item); // key
+    console.log(editableOntologies[item].time); // value
+    if(time > editableOntologies[item].time ){
+      console.log('Time expired for ontology delete this');
+      delete editableOntologies[item];
+      // io.emit('RemovedExpiredOntologies',editableOntologies);
+    }
+    else{
+      console.log('time not expired for ontologies. Keep Storing it')
+    }
+  });
+
+  }, 10000);
+  
+
+
+  function RemoveNode(id) {
+    return editableOntologies.filter(function(emp) {
+        if (emp.id == id) {
+            return false;
+        }
+        return true;
+    });
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+// Waleed Code Ends
+///////////////////////////////////////////
+
+
+
+
+
+
+
+
 
 // to re-write the namedgraph lists to be added to the query
 var namedGraphsString4Qurery = "";
