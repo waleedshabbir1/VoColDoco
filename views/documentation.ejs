@@ -199,37 +199,68 @@
     <div id="coverScreenTree" class="LockOn" style=" display: none;">
 
 </div>
-</div>
+
+
+
+
+
+
+
+
+
 
 
 <div class="ui large modal editmodal" style="height: 50%;">
-    <div class="header">
-        Editor
-    </div>
-    <div class="content">
-      <div class="description">
-        <div class="ui header editHeader">Edit value</div>
-          <div class="ui input" style="width: 100%;">
-              <table class="ui green celled striped table">
-                <tr class="positive"><th>Predicate</th><th>Object</th></tr>
-                <tr>
-                  <td><input style="width: 100%;" id="predicate_value" type="text"></td>
-                  <td><input style="width: 100%;" id="obj_value" type="text"></td>
-                </tr>
-              </table>
-        </div>
-      </div>
-    </div>
-    <div class="actions">
-      <div id="cancel" class="ui black deny button">
-        Cancel
-      </div>
-      <div class="ui positive right labeled icon button" onclick="changeRDF()">
-        Change
-        <i class="checkmark icon"></i>
+  <div class="header">
+      Editor
+  </div>
+  <div class="content">
+    <div class="description">
+      <div class="ui header editHeader">Edit value</div>
+        <div class="ui input" style="width: 100%;">
+            <table class="ui green celled striped table">
+              <tr class="positive"><th>Predicate</th><th>Object</th></tr>
+              <tr>
+                <td><input style="width: 100%;" id="predicate_value" type="text"></td>
+                <td><input style="width: 100%;" id="obj_value" type="text"></td>
+              </tr>
+            </table>
       </div>
     </div>
   </div>
+  <div class="actions">
+    <div id="cancel" class="ui black deny button">
+      Cancel
+    </div>
+    <div class="ui positive right labeled icon button" onclick="changeRDF()">
+      Change
+      <i class="checkmark icon"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- <div class="ui hidden warning message" id="notification" style="position: absolute; top: 5%; right: 0;">
+  <i class="close icon"></i>
+  <div class="header">
+    You must register before you can do that!
+  </div>
+  Visit our registration page, then try again
+</div> -->
+
+
+
+
+
+<!-- End of UI container -->
+</div> 
+
+
+
 
 
     <% include footer %>
@@ -2795,11 +2826,31 @@
                       console.log(editableOntologiesClient);
          
 
+                      // $('#notification').removeClass("ui hidden warning message");
+                      // $('#notification').addClass("ui warning message");
+
                       var buttonId= subject_value+index_value
                       document.getElementById(buttonId).disabled = true;
+
+
+
          
                        });
 
+
+                       //Notification
+//                        setInterval(function(){
+//                          if($('#notification').hasClass('ui warning message')){
+//                           $('#notification').toggleClass('ui hidden warning message');  
+//                          } 
+   
+// },5000);
+
+    //                    $('.message')
+    //   .closest('.message')
+    //   .transition('fade')
+    // ;
+  
 
                           socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
                           //  console.log(subject_value);
