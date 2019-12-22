@@ -244,18 +244,6 @@
 
 
 
-<!-- <div class="ui hidden warning message" id="notification" style="position: absolute; top: 5%; right: 0;">
-  <i class="close icon"></i>
-  <div class="header">
-    You must register before you can do that!
-  </div>
-  Visit our registration page, then try again
-</div> -->
-
-
-
-
-
 <!-- End of UI container -->
 </div> 
 
@@ -270,6 +258,19 @@
 
                   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
                   <script>
+                    siiimpleToast = siiimpleToast.setOptions({
+                    container: 'body',
+                    class: 'siiimpleToast',
+                    position: 'bottom|right',
+                    margin: 15,
+                    delay: 0,
+                    duration: 3000,
+                    style: {},
+                      });
+
+
+
+
                     var socket = io('http://localhost:3060');
                     if(socket){
                       console.log(socket);
@@ -278,8 +279,6 @@
                       console.log("client socket not connected");
                     }
 
-
-                    
 			   
                     socket.emit('connectedToServer');
 			 
@@ -2821,13 +2820,13 @@
                       //  console.log(obj_value);
                       //  console.log(index_value);
                       //  console.log(editableOntologies)
+
+                    siiimpleToast.alert("Locked for Editing");
+
+
                       editableOntologiesClient = editableOntologies
                       console.log('editClickedLockedServer');
                       console.log(editableOntologiesClient);
-         
-
-                      // $('#notification').removeClass("ui hidden warning message");
-                      // $('#notification').addClass("ui warning message");
 
                       var buttonId= subject_value+index_value
                       document.getElementById(buttonId).disabled = true;
@@ -2838,19 +2837,6 @@
                        });
 
 
-                       //Notification
-//                        setInterval(function(){
-//                          if($('#notification').hasClass('ui warning message')){
-//                           $('#notification').toggleClass('ui hidden warning message');  
-//                          } 
-   
-// },5000);
-
-    //                    $('.message')
-    //   .closest('.message')
-    //   .transition('fade')
-    // ;
-  
 
                           socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
                           //  console.log(subject_value);
@@ -2858,6 +2844,8 @@
                           //  console.log(obj_value);
                           //  console.log(index_value);
                           //  console.log(editableOntologies)
+
+                          siiimpleToast.message('User Cancelled Editing');
                           editableOntologiesClient = editableOntologies
                           console.log('CancelEditUnlocked');
                           console.log(editableOntologiesClient);
