@@ -202,36 +202,55 @@
     <div id="coverScreenTree" class="LockOn" style=" display: none;">
 
 </div>
-</div>
+
+
+
+
+
+
+
+
+
 
 <div class="ui large modal editmodal" style="height: 50%;">
-    <div class="header">
-        Editor
-    </div>
-    <div class="content">
-      <div class="description">
-        <div class="ui header editHeader">Edit value</div>
-          <div class="ui input" style="width: 100%;">
-              <table class="ui green celled striped table">
-                <tr class="positive"><th>Predicate</th><th>Object</th></tr>
-                <tr>
-                  <td><input style="width: 100%;" id="predicate_value" type="text"></td>
-                  <td><input style="width: 100%;" id="obj_value" type="text"></td>
-                </tr>
-              </table>
-        </div>
-      </div>
-    </div>
-    <div class="actions">
-      <div id="cancel" class="ui black deny button">
-        Cancel
-      </div>
-      <div class="ui positive right labeled icon button" onclick="changeRDF()">
-        Change
-        <i class="checkmark icon"></i>
+  <div class="header">
+      Editor
+  </div>
+  <div class="content">
+    <div class="description">
+      <div class="ui header editHeader">Edit value</div>
+        <div class="ui input" style="width: 100%;">
+            <table class="ui green celled striped table">
+              <tr class="positive"><th>Predicate</th><th>Object</th></tr>
+              <tr>
+                <td><input style="width: 100%;" id="predicate_value" type="text"></td>
+                <td><input style="width: 100%;" id="obj_value" type="text"></td>
+              </tr>
+            </table>
       </div>
     </div>
   </div>
+  <div class="actions">
+    <div id="cancel" class="ui black deny button">
+      Cancel
+    </div>
+    <div class="ui positive right labeled icon button" onclick="changeRDF()">
+      Change
+      <i class="checkmark icon"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<!-- End of UI container -->
+</div> 
+
+
+
 
     <% include footer %>
                   <!-- End of expressJS coding-->
@@ -240,6 +259,19 @@
 
                   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
                   <script>
+                    siiimpleToast = siiimpleToast.setOptions({
+                    container: 'body',
+                    class: 'siiimpleToast',
+                    position: 'bottom|right',
+                    margin: 15,
+                    delay: 0,
+                    duration: 3000,
+                    style: {},
+                      });
+
+
+
+
                     var socket = io('http://localhost:3060');
                     if(socket){
                       console.log(socket);
@@ -248,8 +280,6 @@
                       console.log("client socket not connected");
                     }
 
-
-                    
 			   
                     socket.emit('connectedToServer');
 			 
@@ -2794,15 +2824,22 @@
                       //  console.log(obj_value);
                       //  console.log(index_value);
                       //  console.log(editableOntologies)
+
+                    siiimpleToast.alert("Locked for Editing");
+
+
                       editableOntologiesClient = editableOntologies
                       console.log('editClickedLockedServer');
                       console.log(editableOntologiesClient);
-         
 
                       var buttonId= subject_value+index_value
                       document.getElementById(buttonId).disabled = true;
+
+
+
          
                        });
+
 
 
                           socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
@@ -2811,6 +2848,8 @@
                           //  console.log(obj_value);
                           //  console.log(index_value);
                           //  console.log(editableOntologies)
+
+                          siiimpleToast.message('User Cancelled Editing');
                           editableOntologiesClient = editableOntologies
                           console.log('CancelEditUnlocked');
                           console.log(editableOntologiesClient);
