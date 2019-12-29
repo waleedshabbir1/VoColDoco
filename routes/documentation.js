@@ -18,7 +18,6 @@ var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
   '/dataset/sparql';
 
 ////////////////////////////////////////////
-////////////////////////////////////////////
 // Waleed Code Starts
 ///////////////////////////////////////////
 
@@ -26,13 +25,11 @@ var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
 var server = require('http').createServer(app); 
 var io = require('socket.io')(server); 
 
-
 var editableOntologies = {};
 
 // when a client connects, do this
 io.on('connection', function(client) {  
   console.log('Client connected...');
-
 
   client.on('connectedToServer', function(data) {
     //send a message to ALL connected clients
@@ -40,9 +37,6 @@ io.on('connection', function(client) {
     io.emit('servermessage', msg);
     io.emit('initialState',editableOntologies)
   });
-
-
-
 
   client.on('editClickedLockedClient', function(subject_value,predicate_value,obj_value,index_value,socket_id) {
     //send a message to ALL connected clients
@@ -55,10 +49,6 @@ io.on('connection', function(client) {
     console.log(editableOntologies);
     io.emit('editClickedLockedServer', subject_value,predicate_value,obj_value,index_value,editableOntologies);
   });
-
-
-
-
 
   client.on('cancelEditClciked', function(subject_value,predicate_value,obj_value,index_value,socket_id) {
     //send a message to ALL connected clients
@@ -75,11 +65,7 @@ io.on('connection', function(client) {
   
 });
 
-
-
-
 io.listen(3060);
-
 
 setInterval(function() {
   
@@ -100,8 +86,6 @@ setInterval(function() {
 
   }, 10000);
   
-
-
   function RemoveNode(id) {
     return editableOntologies.filter(function(emp) {
         if (emp.id == id) {
@@ -112,16 +96,8 @@ setInterval(function() {
 }
 
 ////////////////////////////////////////////
-////////////////////////////////////////////
 // Waleed Code Ends
 ///////////////////////////////////////////
-
-
-
-
-
-
-
 
 
 // to re-write the namedgraph lists to be added to the query
@@ -568,7 +544,6 @@ function replaceWithRDFType(RDFType) {
     return trim(RDFType);
 }
 
-
 function uniquefileNames(array) {
   var out = [];
   var sl = array;
@@ -603,7 +578,6 @@ function SortConcepts(x, y) {
       1 : -1));
 }
 
-
 // filter external classes
 function filterExternalConcept(RDFObjects) {
   var out = [];
@@ -635,7 +609,6 @@ function findURI(array, item) {
   }
   return array[i].URI;
 }
-
 
 router.get(['/', '/:instanceID/:branchName'], function(req, res) {
   if (!req.session.isAuthenticated && req.app.locals.authRequired)
@@ -873,6 +846,5 @@ router.get(['/', '/:instanceID/:branchName'], function(req, res) {
   // });
   }
 });
-
 
 module.exports = router;
