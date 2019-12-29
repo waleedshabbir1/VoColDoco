@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> b99d6d29a5328dae81d94ee1929caa685d6fbd85
 <% include header %>
 <div class="ui grid">
   <div class="ui container" style="padding-bottom : 1cm;">
@@ -204,14 +200,6 @@
 </div>
 
 
-
-
-
-
-
-
-
-
 <div class="ui large modal editmodal" style="height: 50%;">
   <div class="header">
       Editor
@@ -280,12 +268,12 @@
                       console.log("client socket not connected");
                     }
 
-			   
+         
                     socket.emit('connectedToServer');
-			 
+       
                     //when we receive msg from server, do this
                     socket.on('servermessage', function(data){
-                      console.log(data);
+                      // console.log(data);
                       // alert(data);
                     });
                
@@ -320,8 +308,8 @@
                     /// works on named namedGraphs
                     var fromInQueryWithoutNamed = <%- JSON.stringify(fromNamedGraphs).replace(/named/g, '') %> ;
                     var fromInQuery = <%- JSON.stringify(fromNamedGraphs) %> ;
-                    console.log(fromInQuery)
-                    console.log('fromInQuery')
+                    // console.log(fromInQuery)
+                    // console.log('fromInQuery')
 
                     /////////////////////////////////////////////////////////////////////////
                     /////////////////////////////////////////////////////////////////////////
@@ -551,10 +539,8 @@
                                           .includes(
                                             JSON.stringify(trim(result[
                                               k]["oNarrower"].value)))) {
-                                          console.log(JSON.stringify(other[i]['parent']));
-                                          console
-                                            .log(JSON.stringify(trim(result[
-                                              k]["subject"].value)));
+                                          // console.log(JSON.stringify(other[i]['parent']));
+                                          // console.log(JSON.stringify(trim(result[k]["subject"].value)));
                                           isDuplicateData = true;
                                           break;
                                         }
@@ -605,7 +591,7 @@
                                       }
                                     }
                                   }
-                                  console.log(JSONRDFObjectArrary);
+                                  // console.log(JSONRDFObjectArrary);
                                   resolve(JSONRDFObjectArrary);
                                 
                               } else if (caller == "SKOSObjects") {
@@ -655,7 +641,7 @@
                       });
                       execQuery(RDFSObjectsQuery(fromInQuery), "RDFObjects").then(function (result) {
                         RDFObjPlusURI = result;
-                        console.log(RDFObjPlusURI);
+                        // console.log(RDFObjPlusURI);
                       });
                       execQuery(SKOSConceptsQuery1(fromInQuery), "SKOSBroaders").then(function (result) {
                         var SKOSData1 = result;
@@ -923,8 +909,8 @@
                           individualsCount = _.size(array);
                         }
                       }
-                      console.log('individiualsData')
-                      console.log(individiualsData)
+                      // console.log('individiualsData')
+                      // console.log(individiualsData)
 
                       var filterTypes = function (arr, term) {
                         var matches = [];
@@ -2339,10 +2325,10 @@
                       if (isURIExist) {
                         var endpoint = "./../../fuseki/dataset/sparql"
                         if (!anotherQuery)
-                          var sparql = 'SELECT  ?p ?o ' + fromInQueryWithoutNamed + '  WHERE {  <' + conceptURI +
+                          var sparql = 'SELECT ?p ?o ' + fromInQueryWithoutNamed + '  WHERE {  <' + conceptURI +
                             '> ?p ?o }'
                         else
-                          var sparql = 'SELECT  ?o ?p ' + fromInQueryWithoutNamed + '  WHERE { ?o ?p <' + conceptURI +
+                          var sparql = 'SELECT ?o ?p ' + fromInQueryWithoutNamed + '  WHERE { ?o ?p <' + conceptURI +
                             '> }'
                         d3sparql.query(endpoint, sparql, render)
 
@@ -2365,11 +2351,11 @@
                           }
                         })
 
-
-
                       }
                     }
+
                     var justOneTimeExectuted = false;
+
                     // Function to display data in tables on the page
                     function render(json, vocoldoco_query=null) {
                       
@@ -2749,15 +2735,10 @@
 
                     } // End Of render()
 
-
                     var global_var_rdf_arr = null;
                     var global_var_querry = null;
 
                     function editF(subject_value,predicate_value, obj_value,index_value) {
-                      // alert(subject_value);
-                      // alert(predicate_value);
-                      // alert(obj_value);
-                      // alert(index_value);
                       $("#predicate_value").data("old", predicate_value);
                       $("#predicate_value").val(predicate_value);
                       $("#obj_value").data("old", obj_value);
@@ -2766,9 +2747,6 @@
                       closable: false
                       }).modal('show');
                       
-                      
-                      // console.log(predicate_value);
-
                       // if($('#edit_p_o').attr('data-s')==subject_value && $('#edit_p_o').attr('data-p'))
                       
                       // var s = $('#edit_p_o').attr('data-s');
@@ -2777,13 +2755,10 @@
   
                       // console.log(s+p+o);
                       socket.emit('editClickedLockedClient', subject_value,predicate_value,obj_value,index_value,socket.id);
-			                //  console.log(socket.id);
-
-
-                     
+                      //  console.log(socket.id);
 
                       $("#cancel").unbind("click").click(function () {
-			                socket.emit('cancelEditClciked', subject_value,predicate_value,obj_value,index_value,socket.id);
+                      socket.emit('cancelEditClciked', subject_value,predicate_value,obj_value,index_value,socket.id);
                       });
                       
                       setTimeout(function() {
@@ -2791,76 +2766,7 @@
                       console.log("cancel click fired");
                       },
                       60000);
-
-
-
-                      };
-
-
-            
-
-
-
-                      socket.on('initialState', function(editableOntologies){
-                      editableOntologiesClient = editableOntologies
-                      console.log('InitialState')
-                      console.log(editableOntologiesClient);
-                      });
-
-
-                      // socket.on('RemovedExpiredOntologies', function(editableOntologies){
-                      // editableOntologiesClient = editableOntologies
-                      // console.log('RemovedExpiredOntologies')
-                      // console.log(editableOntologiesClient);
-                      // });
-                    
-                    
-
-
-                           //when we receive msg from server, do this
-                      socket.on('editClickedLockedServer', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
-                      //  console.log(subject_value);
-                      //  console.log(predicate_value);
-                      //  console.log(obj_value);
-                      //  console.log(index_value);
-                      //  console.log(editableOntologies)
-
-                    siiimpleToast.alert("Locked for Editing");
-
-
-                      editableOntologiesClient = editableOntologies
-                      console.log('editClickedLockedServer');
-                      console.log(editableOntologiesClient);
-
-                      var buttonId= subject_value+index_value
-                      document.getElementById(buttonId).disabled = true;
-
-
-
-         
-                       });
-
-
-
-                          socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
-                          //  console.log(subject_value);
-                          //  console.log(predicate_value);
-                          //  console.log(obj_value);
-                          //  console.log(index_value);
-                          //  console.log(editableOntologies)
-
-                          siiimpleToast.message('User Cancelled Editing');
-                          editableOntologiesClient = editableOntologies
-                          console.log('CancelEditUnlocked');
-                          console.log(editableOntologiesClient);
-         
-
-                          var buttonId= subject_value+index_value
-                          document.getElementById(buttonId).disabled = false;
-         
-                            });
-
-
+                    };
 
                     function changeRDF() {
                       var old_predicate_value = $("#predicate_value").data("old");
@@ -2870,13 +2776,132 @@
 
                       for (var i = 0; i < global_var_rdf_arr.length; i++) {
                         if (global_var_rdf_arr[i]["p"]["value"] === old_predicate_value && global_var_rdf_arr[i]["o"]["value"] === old_obj_value){
-                          global_var_rdf_arr[i]["p"]["value"] = predicate_value;
-                          global_var_rdf_arr[i]["o"]["value"] = obj_value;
+
+                          changed = global_var_rdf_arr[i]
+
+                          // make uri or literal with language part
+                          predicate_value = '<' + predicate_value + '>';
+                          old_predicate_value = '<' + old_predicate_value + '>';
+
+                          if (changed["o"]["type"] === "uri"){
+                            old_obj_value = '<' + old_obj_value + '>';
+                            obj_value = '<' + obj_value + '>';
+                          }
+                          if (changed["o"]["type"] === "literal"){
+                            old_obj_value = '"' + old_obj_value + '"';
+                            obj_value = '"' + obj_value + '"'
+
+                            if (changed["o"]["xml:lang"]){
+                              old_obj_value = old_obj_value + '@'+ changed["o"]["xml:lang"];
+                              obj_value = obj_value + '@'+ changed["o"]["xml:lang"];
+                            }
+                          }
                         }
                       }
 
-                      console.log(global_var_rdf_arr);
-                    };
+                      var graphs_regex = /from .*/g;
+                      var graphs = global_var_querry.match(graphs_regex);
+
+                      var sub_regex = /{\s+<.*>/g;
+                      var subject_value = global_var_querry.match(sub_regex)[0];
+                      subject_value = subject_value.slice(subject_value.indexOf("<"));
+
+                      var sparql = ""
+                      var found = false;
+
+                      graphs.forEach(graph => {
+                        graph = graph.slice(graph.indexOf("<"));
+
+                        sparql = 'SELECT ?check FROM ' + graph + ' WHERE { ' + subject_value + ' ' 
+                        + old_predicate_value + ' ?check . FILTER( ?check = ' + old_obj_value + ' ) }';
+                        
+                        found = false;
+
+                        $.ajax({
+                          type: 'POST',
+                          data: {
+                            query: encodeURIComponent(sparql)
+                          },
+                          url: './../../sparqlServer/query',
+                          success: function (data, response, jqXHR) {
+                            data = JSON.parse(data);
+                            found = data["results"]["bindings"].length > 0;
+                            if (found) {
+                              deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value);
+                            }
+                          }
+                        });
+                      });
+                      
+                    }; // end of changeRdf
+
+                    function deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value){
+                      sparql = 'DELETE DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + old_predicate_value + ' ' + old_obj_value + '} }'
+                      $.ajax({
+                        type: 'POST',
+                        data: {
+                          query: encodeURIComponent(sparql)
+                        },
+                        url: './../../sparqlServer/update'
+                      });
+                      
+                      sparql = 'INSERT DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + predicate_value + ' ' + obj_value + '} }'
+                      $.ajax({
+                        type: 'POST',
+                        data: {
+                          query: encodeURIComponent(sparql)
+                        },
+                        url: './../../sparqlServer/update'
+                      });
+                    }
+
+                    socket.on('initialState', function(editableOntologies){
+                    editableOntologiesClient = editableOntologies
+                    console.log('InitialState')
+                    console.log(editableOntologiesClient);
+                    });
+
+                    // socket.on('RemovedExpiredOntologies', function(editableOntologies){
+                    // editableOntologiesClient = editableOntologies
+                    // console.log('RemovedExpiredOntologies')
+                    // console.log(editableOntologiesClient);
+                    // });
+                    
+                    //when we receive msg from server, do this
+                    socket.on('editClickedLockedServer', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
+                    console.log(subject_value);
+                    console.log(predicate_value);
+                    console.log(obj_value);
+                    console.log(index_value);
+                    console.log(editableOntologies)
+
+                      siiimpleToast.alert("Locked for Editing");
+
+                      editableOntologiesClient = editableOntologies
+                      console.log('editClickedLockedServer');
+                      console.log(editableOntologiesClient);
+
+                      var buttonId= subject_value+index_value
+                      document.getElementById(buttonId).disabled = true;
+                    });
+
+                    socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
+                    console.log(subject_value);
+                    console.log(predicate_value);
+                    console.log(obj_value);
+                    console.log(index_value);
+                    console.log(editableOntologies);
+
+                      siiimpleToast.message('User Cancelled Editing');
+                      editableOntologiesClient = editableOntologies
+                      console.log('CancelEditUnlocked');
+                      console.log(editableOntologiesClient);        
+                      console.log(editableOntologiesClient);
+                      console.log(editableOntologiesClient);        
+
+                      var buttonId= subject_value+index_value
+                      document.getElementById(buttonId).disabled = false;
+                    });
 
                     // Call when document is ready
                     $(document).ready(function (e) {
