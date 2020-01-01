@@ -17,7 +17,7 @@ var escapeHtml = require('escape-html');
 var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
   '/dataset/sparql';
 
-////////////////////////////////////////////
+///////////////////////////////////////////
 // Waleed Code Starts
 ///////////////////////////////////////////
 
@@ -25,59 +25,87 @@ var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
 var server = require('http').createServer(app); 
 var io = require('socket.io')(server); 
 
-var editableOntologies = {};
+var lockedItemsServer = {};
+var log_arr = [];
 
 // when a client connects, do this
-io.on('connection', function(client) {  
+io.on('connection', function(client) {
+
   console.log('Client connected...');
 
   client.on('connectedToServer', function(data) {
-    //send a message to ALL connected clients
-    msg = 'A new Client is added'
-    io.emit('servermessage', msg);
-    io.emit('initialState',editableOntologies)
+    // send the currently locked items to all connected clients
+    io.emit('initialState', lockedItemsServer)
+
   });
 
-  client.on('editClickedLockedClient', function(subject_value,predicate_value,obj_value,index_value,socket_id) {
-    //send a message to ALL connected clients
-
+  client.on('editStarted', function(subject_value, predicate_value, obj_value, socket_id) {
     //time expiry adding 1 minute in current time
-    time = Date.now()+ (1000*60); 
-    console.log('element time'+time);
-    var index = subject_value+index_value
-    editableOntologies[index] = {'s':subject_value,'p':predicate_value,'o':obj_value,'index':index_value,'socket_id':socket_id,'time':time};
-    console.log(editableOntologies);
-    io.emit('editClickedLockedServer', subject_value,predicate_value,obj_value,index_value,editableOntologies);
+    lockExpiryTime = Date.now() + (1000*60); 
+    // console.log('element time'+time);
+
+    var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+
+    // TODO: change logic, first check if already locked before locking it !
+    lockedItemsServer[spo_key] = {'s':subject_value, 'p':predicate_value, 'o':obj_value, 'socket_id':socket_id, 'lockExpiryTime':lockExpiryTime};
+
+    log_arr.unshift("lockedItemsServerBefore");
+    log_arr.unshift(lockedItemsServer);
+
+    io.emit('itemLocked', subject_value, predicate_value, obj_value, lockedItemsServer);
+
   });
 
-  client.on('cancelEditClciked', function(subject_value,predicate_value,obj_value,index_value,socket_id) {
-    //send a message to ALL connected clients
+  client.on('editCompleted', function(subject_value, predicate_value, obj_value) {
+    log_arr.unshift('editCompleted');
 
-    var index = subject_value+index_value
-    length =  Object.keys(editableOntologies).length;
+    var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+    delete lockedItemsServer[spo_key];
+    
+    log_arr.unshift("editCompleted");
+    log_arr.unshift(lockedItemsServer);
+   
+    io.emit('itemUnlocked_editCompleted', subject_value, predicate_value, obj_value, lockedItemsServer);
 
-    if(length){
-            delete editableOntologies[index];
-    }
-    console.log(editableOntologies);
-    io.emit('cancelEditUnlocked', subject_value,predicate_value,obj_value,index_value,editableOntologies);
+  });
+
+
+  client.on('editCanceled', function(subject_value,predicate_value,obj_value,index_value, socket_id) {
+    log_arr.unshift('editCanceled');
+
+    var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+    delete lockedItemsServer[spo_key];
+
+    log_arr.unshift("editCompleted");
+    log_arr.unshift(lockedItemsServer);
+
+    io.emit('itemUnlocked_editCanceled', subject_value, predicate_value, obj_value, lockedItemsServer);
+
   });
   
 });
 
 io.listen(3060);
 
+// tmp logger
 setInterval(function() {
-  
-  var time = Date.now();
-  console.log('hello timer current time'+time);
-  Object.keys(editableOntologies).forEach(function (item) {
-    console.log(item); // key
-    console.log(editableOntologies[item].time); // value
-    if(time > editableOntologies[item].time ){
-      console.log('Time expired for ontology delete this');
-      delete editableOntologies[item];
-      // io.emit('RemovedExpiredOntologies',editableOntologies);
+  for (let i = 0; i < log_arr.length; i++) {
+    console.log(log_arr.pop(0));
+  }
+}, 10);
+
+setInterval(function() {
+  var current_time = Date.now();
+  console.log('hello timer current time: ' + current_time);
+  Object.keys(lockedItemsServer).forEach(function (item_key) {
+    // console.log(item_key); // key
+    // console.log(lockedItemsServer[item_key].lockExpiryTime); // value
+    if (current_time > lockedItemsServer[item_key].lockExpiryTime) {
+      console.log('Time expired for Item, delete it from lockedItemsServer');
+      delete lockedItemsServer[item_key];
+
+      // TODO: update the changes in locked items on every client
+      // io.emit('RemovedExpiredOntologies',lockedItemsServer);
     }
     else{
       console.log('time not expired for ontologies. Keep Storing it')
@@ -87,7 +115,7 @@ setInterval(function() {
   }, 10000);
   
   function RemoveNode(id) {
-    return editableOntologies.filter(function(emp) {
+    return lockedItemsServer.filter(function(emp) {
         if (emp.id == id) {
             return false;
         }
@@ -95,7 +123,7 @@ setInterval(function() {
     });
 }
 
-////////////////////////////////////////////
+///////////////////////////////////////////
 // Waleed Code Ends
 ///////////////////////////////////////////
 

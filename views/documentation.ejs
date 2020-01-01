@@ -229,55 +229,49 @@
   </div>
 </div>
 
-
-
-
-
-
 <!-- End of UI container -->
-</div> 
-
-
-
+</div>
 
     <% include footer %>
                   <!-- End of expressJS coding-->
 
                   <!-- Start of javascript coding-->
 
+                  <!-- 
+                  ///////////////////////////////////////////
+                  // Waleed Code Starts
+                  /////////////////////////////////////////// 
+                  -->
+
                   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
                   <script>
                     siiimpleToast = siiimpleToast.setOptions({
-                    container: 'body',
-                    class: 'siiimpleToast',
-                    position: 'bottom|right',
-                    margin: 15,
-                    delay: 0,
-                    duration: 3000,
-                    style: {},
-                      });
-
-
-
+                      container: 'body',
+                      class: 'siiimpleToast',
+                      position: 'bottom|right',
+                      margin: 15,
+                      delay: 0,
+                      duration: 3000,
+                      style: {},
+                    });
 
                     var socket = io('http://localhost:3060');
+
                     if(socket){
                       console.log(socket);
                     }
                     else{
                       console.log("client socket not connected");
                     }
-
          
                     socket.emit('connectedToServer');
-       
-                    //when we receive msg from server, do this
-                    socket.on('servermessage', function(data){
-                      // console.log(data);
-                      // alert(data);
-                    });
-               
-                    var editableOntologies = {};
+
+                    var lockedItemsClient = {};
+
+                    ///////////////////////////////////////////
+                    // Waleed Code Ends
+                    /////////////////////////////////////////// 
+
                     // get all the data from route.tree.js
                     var RDFSData = [];
                     var SKOSData = [];
@@ -2330,7 +2324,9 @@
                         else
                           var sparql = 'SELECT ?o ?p ' + fromInQueryWithoutNamed + '  WHERE { ?o ?p <' + conceptURI +
                             '> }'
-                        d3sparql.query(endpoint, sparql, render)
+
+                        // MAKING CONSTANT ERRORS
+                        d3sparql.query(endpoint, sparql, render);
 
                         $.ajax({
                           type: 'POST',
@@ -2349,7 +2345,7 @@
                               render(result, sparql)
                             }
                           }
-                        })
+                        });
 
                       }
                     }
@@ -2359,13 +2355,12 @@
                     // Function to display data in tables on the page
                     function render(json, vocoldoco_query=null) {
                       
+                      // Adding the current concepts name on editing modal
                       item_name = currentSelectedConcept;
-
                       if (item_name.includes("http://") || item_name.includes(
                           "https://")) { //check if it skosURI
                         item_name = trimHash(trimSlash(item_name));
                       }
-
                       $(".header.editHeader").text(item_name);
 
                       global_var_rdf_arr = json.results.bindings;
@@ -2511,25 +2506,23 @@
                               key2 = key2 + '@' + key3;
                             }
 
-                            data_part = 'data-s="' + item_name + '"' + 
-                                        'data-p="' + predicate_value + '"' + 
-                                        'data-o="' + obj_value + '"';
+                            var sub_regex = /{\s+<.*>/g;
+                            var subject_value = global_var_querry.match(sub_regex)[0];
+                            subject_value = subject_value.slice(subject_value.indexOf("<")).slice(1,-1);
                             
-                            subject_value =  "'" + item_name + "'"
+                            var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+
+                            subject_value =  "'" + subject_value + "'"
                             predicate_value = "'" + predicate_value + "'"
                             obj_value = "'" + obj_value + "'"
-                            
-                            // my changes
-                            // editButton = '<button '+data_part+' class="ui button" onclick="editF(' + predicate_value + ',' + obj_value + ')">Edit</button>';
-
-                            if(editableOntologiesClient[item_name+i]){
-                              editButton = '<button '+data_part+' id='+item_name+i+' disabled class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ',' +i+ ')">Edit</button>';
-                            table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
-
+    
+                            if(lockedItemsClient[spo_key]){
+                              editButton = '<button id=' + spo_key + ' disabled class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                              table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                             }
                             else{
-                              editButton = '<button '+data_part+' id='+item_name+i+' class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ',' +i+ ')">Edit</button>';
-                            table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
+                              editButton = '<button id=' + spo_key + ' class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                              table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                             }
 
                           }
@@ -2706,8 +2699,6 @@
                         network.moveTo(scaleOption);
                       })
 
-
-
                       // To render oncemore the graph id the graphTab is clicked
                       $('#graphTab').on('click', function () {
                         network = new vis.Network(container, data, options);
@@ -2738,34 +2729,26 @@
                     var global_var_rdf_arr = null;
                     var global_var_querry = null;
 
-                    function editF(subject_value,predicate_value, obj_value,index_value) {
+                    function editF(subject_value, predicate_value, obj_value) {
                       $("#predicate_value").data("old", predicate_value);
                       $("#predicate_value").val(predicate_value);
                       $("#obj_value").data("old", obj_value);
                       $("#obj_value").val(obj_value);
                       $('.ui.modal.editmodal').modal({
-                      closable: false
+                        closable: false
                       }).modal('show');
                       
-                      // if($('#edit_p_o').attr('data-s')==subject_value && $('#edit_p_o').attr('data-p'))
-                      
-                      // var s = $('#edit_p_o').attr('data-s');
-                      // var p = $('#edit_p_o').attr('data-p');
-                      // var o = $('#edit_p_o').attr('data-o');
-  
-                      // console.log(s+p+o);
-                      socket.emit('editClickedLockedClient', subject_value,predicate_value,obj_value,index_value,socket.id);
-                      //  console.log(socket.id);
+                      socket.emit('editStarted', subject_value, predicate_value, obj_value, socket.id);
 
                       $("#cancel").unbind("click").click(function () {
-                      socket.emit('cancelEditClciked', subject_value,predicate_value,obj_value,index_value,socket.id);
+                        socket.emit('editCanceled', subject_value, predicate_value, obj_value, socket.id);
                       });
                       
                       setTimeout(function() {
                         $('#cancel').trigger('click')
-                      console.log("cancel click fired");
-                      },
-                      60000);
+                        // console.log("cancel click fired");
+                      }, 60000);
+
                     };
 
                     function changeRDF() {
@@ -2774,8 +2757,14 @@
                       var old_obj_value = $("#obj_value").data("old");
                       var obj_value = $("#obj_value").val();
 
+                      var old_predicate_value_string = old_predicate_value;
+                      var old_obj_value_string = old_obj_value;
+
                       for (var i = 0; i < global_var_rdf_arr.length; i++) {
                         if (global_var_rdf_arr[i]["p"]["value"] === old_predicate_value && global_var_rdf_arr[i]["o"]["value"] === old_obj_value){
+
+                          global_var_rdf_arr[i]["p"]["value"] = predicate_value;
+                          global_var_rdf_arr[i]["o"]["value"] = obj_value;
 
                           changed = global_var_rdf_arr[i]
 
@@ -2827,7 +2816,7 @@
                             data = JSON.parse(data);
                             found = data["results"]["bindings"].length > 0;
                             if (found) {
-                              deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value);
+                              deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value, old_predicate_value_string, old_obj_value_string);
                             }
                           }
                         });
@@ -2835,7 +2824,7 @@
                       
                     }; // end of changeRdf
 
-                    function deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value){
+                    function deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value,  old_predicate_value_string, old_obj_value_string){
                       sparql = 'DELETE DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + old_predicate_value + ' ' + old_obj_value + '} }'
                       $.ajax({
                         type: 'POST',
@@ -2853,55 +2842,102 @@
                         },
                         url: './../../sparqlServer/update'
                       });
+
+                      subject_value = subject_value.slice(1, -1);
+
+                      // tell everyone that edit was completed
+                      socket.emit('editCompleted', subject_value, old_predicate_value_string, old_obj_value_string);
+
+                      // refresh the local view according to the made changes
+                      // render({results: {bindings: global_var_rdf_arr}}, global_var_querry);
                     }
 
-                    socket.on('initialState', function(editableOntologies){
-                    editableOntologiesClient = editableOntologies
-                    console.log('InitialState')
-                    console.log(editableOntologiesClient);
+                    ///////////////////////////////////////////
+                    // Waleed Code Starts
+                    ///////////////////////////////////////////
+
+                    socket.on('initialState', function(lockedItemsServer){
+                      lockedItemsClient = lockedItemsServer
+                      console.log('InitialState')
+                      console.log(lockedItemsClient);
                     });
 
-                    // socket.on('RemovedExpiredOntologies', function(editableOntologies){
-                    // editableOntologiesClient = editableOntologies
-                    // console.log('RemovedExpiredOntologies')
-                    // console.log(editableOntologiesClient);
-                    // });
-                    
-                    //when we receive msg from server, do this
-                    socket.on('editClickedLockedServer', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
-                    console.log(subject_value);
-                    console.log(predicate_value);
-                    console.log(obj_value);
-                    console.log(index_value);
-                    console.log(editableOntologies)
+                    socket.on('itemLocked', function(subject_value, predicate_value, obj_value, lockedItemsServer){
+                      console.log('itemLocked');
+                      lockedItemsClient = lockedItemsServer
+                      // console.log(lockedItemsClient);
 
                       siiimpleToast.alert("Locked for Editing");
 
-                      editableOntologiesClient = editableOntologies
-                      console.log('editClickedLockedServer');
-                      console.log(editableOntologiesClient);
+                      var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
 
-                      var buttonId= subject_value+index_value
-                      document.getElementById(buttonId).disabled = true;
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = true;
+                      }
+
                     });
 
-                    socket.on('cancelEditUnlocked', function(subject_value,predicate_value,obj_value,index_value,editableOntologies){
-                    console.log(subject_value);
-                    console.log(predicate_value);
-                    console.log(obj_value);
-                    console.log(index_value);
-                    console.log(editableOntologies);
+                    socket.on('itemUnlocked_editCompleted', function(subject_value, predicate_value, obj_value, lockedItemsServer){
+                      console.log('itemUnlocked_editCompleted');
+
+                      lockedItemsClient = lockedItemsServer
+                      console.log(lockedItemsClient);
+
+                      var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = false;
+                      }
+
+                      if (global_var_querry) {
+                        var sub_regex = /{\s+<.*>/g;
+                        var visible_subject = global_var_querry.match(sub_regex)[0];
+                        visible_subject = visible_subject.slice(visible_subject.indexOf("<")).slice(1,-1);
+
+                        // console.log("visible_subject");
+                        // console.log(visible_subject);
+
+                        if (visible_subject == subject_value){
+                          // refresh the view if changes are made in curently viewed concept
+
+                          setTimeout(function() { 
+                            $.ajax({
+                              type: 'POST',
+                              data: {query: encodeURIComponent(global_var_querry)},
+                              url: './../../sparqlServer/query',
+                              success: function (data, response, jqXHR) {
+                                var result = JSON.parse(data)
+                                if (result != null) {
+                                  render(result, global_var_querry)
+                                  console.log("should change");
+                                  console.log(result);
+                                }
+                              }
+                            });
+                          }, 500);
+
+                        }
+                      }
+
+                    });
+
+                    socket.on('itemUnlocked_editCanceled', function(subject_value, predicate_value, obj_value, lockedItemsServer){
+                      console.log('itemUnlocked_editCanceled');
+
+                      lockedItemsClient = lockedItemsServer
+                      console.log(lockedItemsClient);
 
                       siiimpleToast.message('User Cancelled Editing');
-                      editableOntologiesClient = editableOntologies
-                      console.log('CancelEditUnlocked');
-                      console.log(editableOntologiesClient);        
-                      console.log(editableOntologiesClient);
-                      console.log(editableOntologiesClient);        
+                      var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = false;
+                      }
 
-                      var buttonId= subject_value+index_value
-                      document.getElementById(buttonId).disabled = false;
                     });
+
+                    ///////////////////////////////////////////
+                    // Waleed Code Ends
+                    ///////////////////////////////////////////
 
                     // Call when document is ready
                     $(document).ready(function (e) {
