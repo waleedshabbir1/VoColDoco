@@ -243,6 +243,8 @@
                   /////////////////////////////////////////// 
                   -->
 
+                  
+                  
                   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
                   <script>
                     siiimpleToast = siiimpleToast.setOptions({
@@ -2510,7 +2512,7 @@
                             var subject_value = global_var_querry.match(sub_regex)[0];
                             subject_value = subject_value.slice(subject_value.indexOf("<")).slice(1,-1);
                             
-                            var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+                            var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
 
                             subject_value =  "'" + subject_value + "'"
                             predicate_value = "'" + predicate_value + "'"
@@ -2744,10 +2746,10 @@
                         socket.emit('editCanceled', subject_value, predicate_value, obj_value, socket.id);
                       });
                       
-                      setTimeout(function() {
-                        $('#cancel').trigger('click')
-                        // console.log("cancel click fired");
-                      }, 60000);
+                      // setTimeout(function() {
+                      //   $('#cancel').trigger('click')
+                      //   // console.log("cancel click fired");
+                      // }, 60000);
 
                     };
 
@@ -2869,7 +2871,10 @@
 
                       siiimpleToast.alert("Locked for Editing");
 
-                      var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
+
+                      console.log(socket.id);
+                      console.log(spo_key);
 
                       if (document.getElementById(spo_key)){
                         document.getElementById(spo_key).disabled = true;
@@ -2883,7 +2888,7 @@
                       lockedItemsClient = lockedItemsServer
                       console.log(lockedItemsClient);
 
-                      var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
 
                       if (document.getElementById(spo_key)){
                         document.getElementById(spo_key).disabled = false;
@@ -2928,7 +2933,32 @@
                       console.log(lockedItemsClient);
 
                       siiimpleToast.message('User Cancelled Editing');
-                      var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = false;
+                      }
+
+                    });
+
+
+
+                    socket.on('editTimeout', function(spo_key, client_socket_id, lockedItemsServer){
+                      console.log('edit timeout');
+
+                      lockedItemsClient = lockedItemsServer
+                      console.log(lockedItemsClient);
+
+                      console.log(socket.id);
+                      console.log(client_socket_id);
+                      console.log(spo_key);
+                      if(socket.id == client_socket_id){
+                        $('#cancel').trigger('click');
+                      }
+                      
+
+
+                      // siiimpleToast.message('User Cancelled Editing');
                       if (document.getElementById(spo_key)){
                         document.getElementById(spo_key).disabled = false;
                       }

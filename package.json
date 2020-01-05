@@ -17,6 +17,7 @@
     "express-http-proxy": "^1.1.0",
     "express-session": "^1.15.6",
     "jsonfile": "^4.0.0",
+    "md5": "^2.2.1",
     "morgan": "^1.9.0",
     "node-watch": "^0.5.5",
     "semantic-ui": "^2.3.3",

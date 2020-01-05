@@ -24,7 +24,7 @@ var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
 // Socket io
 var server = require('http').createServer(app); 
 var io = require('socket.io')(server); 
-
+var md5 = require('md5');
 var lockedItemsServer = {};
 var log_arr = [];
 
@@ -44,13 +44,21 @@ io.on('connection', function(client) {
     lockExpiryTime = Date.now() + (1000*60); 
     // console.log('element time'+time);
 
-    var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+    var spo_key = [subject_value, predicate_value, md5(obj_value)].join("&_sep_&"); 
 
     // TODO: change logic, first check if already locked before locking it !
-    lockedItemsServer[spo_key] = {'s':subject_value, 'p':predicate_value, 'o':obj_value, 'socket_id':socket_id, 'lockExpiryTime':lockExpiryTime};
+    if(lockedItemsServer[spo_key]){
+      console.log('item already in it');
+      io.emit('editTimeout', spo_key, socket_id, lockedItemsServer);
+    }
+    else{
+      lockedItemsServer[spo_key] = {'s':subject_value, 'p':predicate_value, 'o':obj_value, 'socket_id':socket_id, 'lockExpiryTime':lockExpiryTime};
+    }
+    // lockedItemsServer[spo_key] = {'s':subject_value, 'p':predicate_value, 'o':obj_value, 'socket_id':socket_id, 'lockExpiryTime':lockExpiryTime};
 
     log_arr.unshift("lockedItemsServerBefore");
     log_arr.unshift(lockedItemsServer);
+    log_arr.unshift(spo_key);
 
     io.emit('itemLocked', subject_value, predicate_value, obj_value, lockedItemsServer);
 
@@ -59,7 +67,7 @@ io.on('connection', function(client) {
   client.on('editCompleted', function(subject_value, predicate_value, obj_value) {
     log_arr.unshift('editCompleted');
 
-    var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+    var spo_key = [subject_value, predicate_value, md5(obj_value)].join("&_sep_&");
     delete lockedItemsServer[spo_key];
     
     log_arr.unshift("editCompleted");
@@ -70,13 +78,13 @@ io.on('connection', function(client) {
   });
 
 
-  client.on('editCanceled', function(subject_value,predicate_value,obj_value,index_value, socket_id) {
+  client.on('editCanceled', function(subject_value,predicate_value,obj_value, socket_id) {
     log_arr.unshift('editCanceled');
 
-    var spo_key = [subject_value, predicate_value, obj_value].join("&_sep_&");
+    var spo_key = [subject_value, predicate_value, md5(obj_value)].join("&_sep_&");
     delete lockedItemsServer[spo_key];
 
-    log_arr.unshift("editCompleted");
+    log_arr.unshift("editCanceled");
     log_arr.unshift(lockedItemsServer);
 
     io.emit('itemUnlocked_editCanceled', subject_value, predicate_value, obj_value, lockedItemsServer);
@@ -102,10 +110,12 @@ setInterval(function() {
     // console.log(lockedItemsServer[item_key].lockExpiryTime); // value
     if (current_time > lockedItemsServer[item_key].lockExpiryTime) {
       console.log('Time expired for Item, delete it from lockedItemsServer');
+
+      var client_socket_id = lockedItemsServer[item_key].socket_id;
       delete lockedItemsServer[item_key];
 
       // TODO: update the changes in locked items on every client
-      // io.emit('RemovedExpiredOntologies',lockedItemsServer);
+      io.emit('editTimeout', item_key, client_socket_id, lockedItemsServer);
     }
     else{
       console.log('time not expired for ontologies. Keep Storing it')
