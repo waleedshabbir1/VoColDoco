@@ -207,15 +207,28 @@
   <div class="content">
     <div class="description">
       <div class="ui header editHeader">Edit value</div>
-        <div class="ui input" style="width: 100%;">
-            <table class="ui green celled striped table">
-              <tr class="positive"><th>Predicate</th><th>Object</th></tr>
-              <tr>
-                <td><input style="width: 100%;" id="predicate_value" type="text"></td>
-                <td><input style="width: 100%;" id="obj_value" type="text"></td>
-              </tr>
-            </table>
+
+      <!-- when editing S P O -->
+      <div id="spo_edit" class="ui input" style="width: 100%;">
+        <table class="ui green celled striped table">
+          <tr class="positive"><th>Predicate</th><th>Object</th></tr>
+          <tr>
+            <td><input style="width: 100%;" id="predicate_value" type="text"></td>
+            <td><input style="width: 100%;" id="obj_value" type="text"></td>
+          </tr>
+        </table>
       </div>
+
+      <!-- when editing Subject only -->
+      <div id="s_edit" style="display: none;" class="ui input" style="width: 100%;">
+        <table class="ui green celled striped table">
+          <tr class="positive"><th>Subject</th></tr>
+          <tr>
+            <td><input style="width: 100%;" id="subject_value" type="text"></td>
+          </tr>
+        </table>
+      </div>
+
     </div>
   </div>
   <div class="actions">
@@ -244,9 +257,13 @@
                   -->
 
                   
-                  
                   <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
                   <script>
+
+                    // CONSTANTS
+                    var SEPARATOR = "&_sep_&"
+                    var NONE_VALUE = "__NONE__"
+
                     siiimpleToast = siiimpleToast.setOptions({
                       container: 'body',
                       class: 'siiimpleToast',
@@ -2365,8 +2382,10 @@
                       }
                       $(".header.editHeader").text(item_name);
 
+                      // added by zaib
+                      is_subject_edit = false;
                       global_var_rdf_arr = json.results.bindings;
-                      global_var_querry = vocoldoco_query;
+                      global_var_query = vocoldoco_query;
 
                       var objectOrSubject = "Object";
                       var dataSPARQL = json.results.bindings;
@@ -2509,21 +2528,21 @@
                             }
 
                             var sub_regex = /{\s+<.*>/g;
-                            var subject_value = global_var_querry.match(sub_regex)[0];
+                            var subject_value = global_var_query.match(sub_regex)[0];
                             subject_value = subject_value.slice(subject_value.indexOf("<")).slice(1,-1);
                             
-                            var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
+                            var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
 
                             subject_value =  "'" + subject_value + "'"
                             predicate_value = "'" + predicate_value + "'"
                             obj_value = "'" + obj_value + "'"
     
                             if(lockedItemsClient[spo_key]){
-                              editButton = '<button id=' + spo_key + ' disabled class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                              editButton = '<button id=' + spo_key + ' disabled class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
                               table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                             }
                             else{
-                              editButton = '<button id=' + spo_key + ' class="ui button" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                              editButton = '<button id=' + spo_key + ' class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
                               table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                             }
 
@@ -2558,7 +2577,27 @@
                         color: '#e9d4df'
                       });
 
-                      $("#conceptHead ").html('<p >  Details: <code>' + currentSelectedConcept + '</code></p>');
+                      subject_value = currentSelectedConcept;
+                      predicate_value = NONE_VALUE;
+                      obj_value = NONE_VALUE;
+                      
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+
+                      subject_value =  "'" + subject_value + "'"
+                      predicate_value = "'" + predicate_value + "'"
+                      obj_value = "'" + obj_value + "'"
+                      
+                      if(lockedItemsClient[spo_key]){
+                        editButton = '<button id=' + spo_key + ' disabled class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                        
+                        is_subject_edit = true;
+                      }
+                      else {
+                        editButton = '<button id=' + spo_key + ' class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                      }
+
+                      $("#conceptHead ").html('<p >  Details: <code>' + currentSelectedConcept +
+                        '</code><span style="float: right;">' + editButton + '</span></p>');
                       $("#infoDetails").show();
                       $('#viewList').show();
                       // domainTable has some values to show
@@ -2726,20 +2765,40 @@
                         fitNetworkFirstTime = false;
                       });
 
+                      // added by zaib
+                      if (is_subject_edit){
+                        $(".alleditbuttons").attr("disabled", true);
+                      }
+
                     } // End Of render()
 
                     var global_var_rdf_arr = null;
-                    var global_var_querry = null;
+                    var global_var_query = null;
 
                     function editF(subject_value, predicate_value, obj_value) {
-                      $("#predicate_value").data("old", predicate_value);
-                      $("#predicate_value").val(predicate_value);
-                      $("#obj_value").data("old", obj_value);
-                      $("#obj_value").val(obj_value);
+
+                      // if item edited is a subject. show only subject textbox
+                      if (predicate_value == NONE_VALUE && obj_value == NONE_VALUE){
+                        $(".header.editHeader").data("edited", "s");
+                        $("#subject_value").data("old", subject_value);
+                        $("#subject_value").val(subject_value);
+                        $("#s_edit").css("display", "block")
+                        $("#spo_edit").css("display", "none")
+                      } else {
+                        // item edited is predicate and object
+                        $(".header.editHeader").data("edited", "spo");
+                        $("#predicate_value").data("old", predicate_value);
+                        $("#predicate_value").val(predicate_value);
+                        $("#obj_value").data("old", obj_value);
+                        $("#obj_value").val(obj_value);
+                        $("#spo_edit").css("display", "block")
+                        $("#s_edit").css("display", "none")
+                      }
+                    
                       $('.ui.modal.editmodal').modal({
                         closable: false
                       }).modal('show');
-                      
+
                       socket.emit('editStarted', subject_value, predicate_value, obj_value, socket.id);
 
                       $("#cancel").unbind("click").click(function () {
@@ -2754,6 +2813,93 @@
                     };
 
                     function changeRDF() {
+                      var item_edited = $(".header.editHeader").data("edited")
+
+                      // if item edited is a subject. only edit subject
+                      if (item_edited == "s"){
+                        return changeRDF_s();
+                      } 
+
+                      // item edited is predicate and object
+                      if (item_edited == "spo"){
+                        return changeRDF_spo();
+                      }
+
+                    }
+
+                    function changeRDF_s() {
+                      var old_subject_value = $("#subject_value").data("old");
+                      var value_new = '<' + $("#subject_value").val() + '>';
+
+                      var graphs_regex = /from .*/g;
+                      var graphs = global_var_query.match(graphs_regex);
+
+                      var sub_regex = /{\s+<.*>/g;
+                      var subject_value_uri = global_var_query.match(sub_regex)[0];
+                      subject_value_uri = subject_value_uri.slice(subject_value_uri.indexOf("<"));
+
+                      positions = [
+                       {s: subject_value_uri, p: "?p", o: "?o", var: "s"},
+                       {s: "?s", p: subject_value_uri, o: "?o", var: "p"},
+                       {s: "?s", p: "?p", o: subject_value_uri, var: "o"}
+                      ]
+                      
+                      var sparql = "";
+
+                      graphs.forEach(graph => {
+                        graph = graph.slice(graph.indexOf("<"));
+
+                        positions.forEach(posi => {
+
+                          sparql = 'SELECT * FROM ' + graph + ' WHERE { ' + 
+                          posi["s"] + ' ' + posi["p"] + ' ' + posi["o"] + '.}';
+
+                          $.ajax({
+                            type: 'POST',
+                            data: {
+                              query: encodeURIComponent(sparql)
+                            },
+                            url: './../../sparqlServer/query',
+                            success: function (data, response, jqXHR) {
+
+                              JSON.parse(data)["results"]["bindings"].forEach(binding => {
+
+                                // make the values urls literals
+                                for (var entity in binding){
+                                  if (binding[entity].hasOwnProperty("type")){
+                                    if (binding[entity].type == "uri"){
+                                      binding[entity]["value"] = '<' + binding[entity]["value"] + '>';
+                                    }
+                                    if (binding[entity].type == "literal"){
+                                      binding[entity]["value"] = '"' + binding[entity]["value"] + '"';
+
+                                      if (binding[entity].hasOwnProperty("xml:lang")){
+                                        binding[entity]["value"] = binding[entity]["value"] + '@' + binding[entity]["xml:lang"];
+                                      }
+                                    }
+                                  }
+                                }
+
+                                // fill in the third url
+                                old_value = posi[posi["var"]]
+                                binding[posi["var"]] = {value: posi[posi["var"]]};
+                                
+                                // console.log(binding);
+                                deleteAndInsert_s(graph, value_new, posi["var"], binding);
+                              });
+
+                            }
+                          });
+
+                        }); // posi
+                      }); // graph
+
+                      // tell everyone that edit was completed
+                      socket.emit('editCompleted', old_subject_value , NONE_VALUE, NONE_VALUE);
+
+                    } // end of changeRDF_s
+
+                    function changeRDF_spo() {
                       var old_predicate_value = $("#predicate_value").data("old");
                       var predicate_value = $("#predicate_value").val();
                       var old_obj_value = $("#obj_value").data("old");
@@ -2791,10 +2937,10 @@
                       }
 
                       var graphs_regex = /from .*/g;
-                      var graphs = global_var_querry.match(graphs_regex);
+                      var graphs = global_var_query.match(graphs_regex);
 
                       var sub_regex = /{\s+<.*>/g;
-                      var subject_value = global_var_querry.match(sub_regex)[0];
+                      var subject_value = global_var_query.match(sub_regex)[0];
                       subject_value = subject_value.slice(subject_value.indexOf("<"));
 
                       var sparql = ""
@@ -2818,40 +2964,48 @@
                             data = JSON.parse(data);
                             found = data["results"]["bindings"].length > 0;
                             if (found) {
-                              deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value, old_predicate_value_string, old_obj_value_string);
+                              deleteAndInsert_spo(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value);
+
+                              // tell everyone that edit was completed
+                              subject_value = subject_value.slice(1, -1);
+                              socket.emit('editCompleted', subject_value, old_predicate_value_string, old_obj_value_string);
+
+                              // refresh the local view according to the made changes
+                              // render({results: {bindings: global_var_rdf_arr}}, global_var_query);
                             }
                           }
                         });
                       });
                       
-                    }; // end of changeRdf
+                    }; // end of changeRdf_spo
 
-                    function deleteAndInsert(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value,  old_predicate_value_string, old_obj_value_string){
-                      sparql = 'DELETE DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + old_predicate_value + ' ' + old_obj_value + '} }'
-                      $.ajax({
-                        type: 'POST',
-                        data: {
-                          query: encodeURIComponent(sparql)
-                        },
-                        url: './../../sparqlServer/update'
-                      });
+                    function deleteAndInsert_s(graph, value_new, value_posi, binding){
+                      sparql = 'DELETE DATA { GRAPH ' + graph + ' { ' + binding.s.value + ' ' + binding.p.value + ' ' + binding.o.value + '} }';
+                      run_query(sparql);
+
+                      // change the value at the position that needs to be updated
+                      binding[value_posi]["value"] = value_new;
                       
-                      sparql = 'INSERT DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + predicate_value + ' ' + obj_value + '} }'
+                      sparql = 'INSERT DATA { GRAPH ' + graph + ' { ' + binding.s.value + ' ' + binding.p.value + ' ' + binding.o.value + '} }';
+                      run_query(sparql);
+                    }
+
+                    function deleteAndInsert_spo(graph, subject_value,  old_predicate_value, old_obj_value, predicate_value, obj_value){
+                      sparql = 'DELETE DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + old_predicate_value + ' ' + old_obj_value + '} }';
+                      run_query(sparql);
+                      
+                      sparql = 'INSERT DATA { GRAPH ' + graph + ' { ' + subject_value + ' ' + predicate_value + ' ' + obj_value + '} }';
+                      run_query(sparql);
+                    }
+
+                    function run_query(sparql){
                       $.ajax({
-                        type: 'POST',
-                        data: {
-                          query: encodeURIComponent(sparql)
-                        },
-                        url: './../../sparqlServer/update'
+                          type: 'POST',
+                          data: {
+                            query: encodeURIComponent(sparql)
+                          },
+                          url: './../../sparqlServer/update'
                       });
-
-                      subject_value = subject_value.slice(1, -1);
-
-                      // tell everyone that edit was completed
-                      socket.emit('editCompleted', subject_value, old_predicate_value_string, old_obj_value_string);
-
-                      // refresh the local view according to the made changes
-                      // render({results: {bindings: global_var_rdf_arr}}, global_var_querry);
                     }
 
                     ///////////////////////////////////////////
@@ -2871,13 +3025,16 @@
 
                       siiimpleToast.alert("Locked for Editing");
 
-                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
+                      // console.log(socket.id);
 
-                      console.log(socket.id);
-                      console.log(spo_key);
+                      if ($("#spo_key")){
+                        $("#spo_key").attr("disabled", true);
 
-                      if (document.getElementById(spo_key)){
-                        document.getElementById(spo_key).disabled = true;
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", true);
+                        }
                       }
 
                     });
@@ -2886,17 +3043,23 @@
                       console.log('itemUnlocked_editCompleted');
 
                       lockedItemsClient = lockedItemsServer
-                      console.log(lockedItemsClient);
+                      // console.log(lockedItemsClient);
 
-                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
 
-                      if (document.getElementById(spo_key)){
-                        document.getElementById(spo_key).disabled = false;
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
+
+                      if ($("#spo_key")){
+                        $("#spo_key").attr("disabled", false);
+
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", false);
+                        }
                       }
 
-                      if (global_var_querry) {
+                      if (global_var_query) {
                         var sub_regex = /{\s+<.*>/g;
-                        var visible_subject = global_var_querry.match(sub_regex)[0];
+                        var visible_subject = global_var_query.match(sub_regex)[0];
                         visible_subject = visible_subject.slice(visible_subject.indexOf("<")).slice(1,-1);
 
                         // console.log("visible_subject");
@@ -2908,12 +3071,12 @@
                           setTimeout(function() { 
                             $.ajax({
                               type: 'POST',
-                              data: {query: encodeURIComponent(global_var_querry)},
+                              data: {query: encodeURIComponent(global_var_query)},
                               url: './../../sparqlServer/query',
                               success: function (data, response, jqXHR) {
                                 var result = JSON.parse(data)
                                 if (result != null) {
-                                  render(result, global_var_querry)
+                                  render(result, global_var_query)
                                   console.log("should change");
                                   console.log(result);
                                 }
@@ -2930,24 +3093,29 @@
                       console.log('itemUnlocked_editCanceled');
 
                       lockedItemsClient = lockedItemsServer
-                      console.log(lockedItemsClient);
+                      // console.log(lockedItemsClient);
 
                       siiimpleToast.message('User Cancelled Editing');
 
-                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join("&_sep_&");
-                      if (document.getElementById(spo_key)){
-                        document.getElementById(spo_key).disabled = false;
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
+
+                      if ($("#spo_key")){
+                        $("#spo_key").attr("disabled", false);
+
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", false);
+                        }
                       }
 
                     });
 
-
-
-                    socket.on('editTimeout', function(spo_key, client_socket_id, lockedItemsServer){
-                      console.log('edit timeout');
+                    socket.on('editTimeout', function(subject_value, predicate_value, obj_value, client_socket_id, lockedItemsServer){
+                      console.log('editTimeout');
 
                       lockedItemsClient = lockedItemsServer
-                      console.log(lockedItemsClient);
+                      // console.log(lockedItemsClient);
 
                       console.log(socket.id);
                       console.log(client_socket_id);
@@ -2955,12 +3123,18 @@
                       if(socket.id == client_socket_id){
                         $('#cancel').trigger('click');
                       }
+
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
                       
-
-
                       // siiimpleToast.message('User Cancelled Editing');
-                      if (document.getElementById(spo_key)){
-                        document.getElementById(spo_key).disabled = false;
+                      if ($("#spo_key")){
+                        $("#spo_key").attr("disabled", false);
+                        
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", false);
+                        }
                       }
 
                     });
