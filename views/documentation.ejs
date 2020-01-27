@@ -2383,7 +2383,8 @@
                       $(".header.editHeader").text(item_name);
 
                       // added by zaib
-                      concept_being_edited = false;
+                      is_subject_edit = false;
+                      is_spo_edit = false;
                       global_var_rdf_arr = json.results.bindings;
                       global_var_query = vocoldoco_query;
 
@@ -2539,7 +2540,7 @@
     
                             if(lockedItemsClient[spo_key]){
                               editButton = '<button id=' + spo_key + ' disabled class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
-                              concept_being_edited = true;
+                              is_spo_edit = true;
                             }
                             else{
                               editButton = '<button id=' + spo_key + ' class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
@@ -2577,7 +2578,10 @@
                         color: '#e9d4df'
                       });
 
-                      subject_value = currentSelectedConcept;
+                      var sub_regex = /{\s+<.*>/g;
+                      var subject_value = global_var_query.match(sub_regex)[0];
+                      subject_value = subject_value.slice(subject_value.indexOf("<")).slice(1,-1);
+                      
                       predicate_value = NONE_VALUE;
                       obj_value = NONE_VALUE;
                       
@@ -2588,11 +2592,11 @@
                       obj_value = "'" + obj_value + "'"
                       
                       if(lockedItemsClient[spo_key]){
-                        editButton = '<button id=' + spo_key + ' disabled class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
-                        concept_being_edited = true;
+                        editButton = '<button id=' + spo_key + ' disabled class="ui button subjecteditbutton alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                        is_subject_edit = true;
                       }
                       else {
-                        editButton = '<button id=' + spo_key + ' class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
+                        editButton = '<button id=' + spo_key + ' class="ui button subjecteditbutton alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
                       }
 
                       $("#conceptHead ").html('<p >  Details: <code>' + currentSelectedConcept +
@@ -2765,8 +2769,11 @@
                       });
 
                       // added by zaib
-                      if (concept_being_edited){
+                      if (is_subject_edit){
                         $(".alleditbuttons").attr("disabled", true);
+                      }
+                      if (is_spo_edit){
+                        $(".subjecteditbutton").attr("disabled", true);
                       }
 
                     } // End Of render()
@@ -2776,6 +2783,9 @@
 
                     function editF(subject_value, predicate_value, obj_value) {
 
+                      console.log("subject_value very important")
+                      console.log(subject_value)
+                      
                       // if item edited is a subject. show only subject textbox
                       if (predicate_value == NONE_VALUE && obj_value == NONE_VALUE){
                         $(".header.editHeader").data("edited", "s");
@@ -2894,7 +2904,7 @@
                       }); // graph
 
                       // tell everyone that edit was completed
-                      socket.emit('editCompleted', old_subject_value , NONE_VALUE, NONE_VALUE);
+                      socket.emit('editCompleted', old_subject_value , NONE_VALUE, NONE_VALUE, value_new.slice(1,-1));
 
                     } // end of changeRDF_s
 
@@ -2967,7 +2977,7 @@
 
                               // tell everyone that edit was completed
                               subject_value = subject_value.slice(1, -1);
-                              socket.emit('editCompleted', subject_value, old_predicate_value_string, old_obj_value_string);
+                              socket.emit('editCompleted', subject_value, old_predicate_value_string, old_obj_value_string, NONE_VALUE);
 
                               // refresh the local view according to the made changes
                               // render({results: {bindings: global_var_rdf_arr}}, global_var_query);
@@ -3026,15 +3036,19 @@
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
                       // console.log(socket.id);
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
 
-                      if ($("#spo_key")){
-                        $("#spo_key").attr("disabled", true);
-                        $(".alleditbuttons").attr("disabled", true);
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = true;
+                        $(".subjecteditbutton").attr("disabled", true);
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", true);
+                        }
                       }
 
                     });
 
-                    socket.on('itemUnlocked_editCompleted', function(subject_value, predicate_value, obj_value, lockedItemsServer){
+                    socket.on('itemUnlocked_editCompleted', function(subject_value, predicate_value, obj_value, new_subject, lockedItemsServer){
                       console.log('itemUnlocked_editCompleted');
 
                       lockedItemsClient = lockedItemsServer
@@ -3042,9 +3056,15 @@
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
 
-                      if ($("#spo_key")){
-                        $("#spo_key").attr("disabled", false);
-                        $(".alleditbuttons").attr("disabled", false);
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
+
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = false;
+                        $(".subjecteditbutton").attr("disabled", false);
+
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", false);
+                        }
                       }
 
                       if (global_var_query) {
@@ -3052,12 +3072,17 @@
                         var visible_subject = global_var_query.match(sub_regex)[0];
                         visible_subject = visible_subject.slice(visible_subject.indexOf("<")).slice(1,-1);
 
-                        // console.log("visible_subject");
-                        // console.log(visible_subject);
-
                         if (visible_subject == subject_value){
                           // refresh the view if changes are made in curently viewed concept
 
+                          // subject changed
+                          if (new_subject != NONE_VALUE){
+                            global_var_query = global_var_query.replace(visible_subject, new_subject);
+                           
+                            // remove this later, very wrong
+                            currentSelectedConcept = new_subject;
+                          }
+                          
                           setTimeout(function() { 
                             $.ajax({
                               type: 'POST',
@@ -3066,6 +3091,7 @@
                               success: function (data, response, jqXHR) {
                                 var result = JSON.parse(data)
                                 if (result != null) {
+
                                   render(result, global_var_query)
                                   console.log("should change");
                                   console.log(result);
@@ -3089,9 +3115,15 @@
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
 
-                      if ($("#spo_key")){
-                        $("#spo_key").attr("disabled", false);
-                        $(".alleditbuttons").attr("disabled", false);
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
+
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = false;
+                        $(".subjecteditbutton").attr("disabled", false);
+
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", false);
+                        }
                       }
 
                     });
@@ -3110,11 +3142,17 @@
                       }
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+
+                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
                       
                       // siiimpleToast.message('User Cancelled Editing');
-                      if ($("#spo_key")){
-                        $("#spo_key").attr("disabled", false);
-                        $(".alleditbuttons").attr("disabled", false);
+                      if (document.getElementById(spo_key)){
+                        document.getElementById(spo_key).disabled = false;
+                        $(".subjecteditbutton").attr("disabled", false);
+                        
+                        if (is_subject_edit){
+                          $(".alleditbuttons").attr("disabled", false);
+                        }
                       }
 
                     });
