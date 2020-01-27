@@ -2383,7 +2383,7 @@
                       $(".header.editHeader").text(item_name);
 
                       // added by zaib
-                      is_subject_edit = false;
+                      concept_being_edited = false;
                       global_var_rdf_arr = json.results.bindings;
                       global_var_query = vocoldoco_query;
 
@@ -2539,12 +2539,12 @@
     
                             if(lockedItemsClient[spo_key]){
                               editButton = '<button id=' + spo_key + ' disabled class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
-                              table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
+                              concept_being_edited = true;
                             }
                             else{
                               editButton = '<button id=' + spo_key + ' class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
-                              table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
                             }
+                            table += '<tr><td>' + key1 + '</td><td>' + key2 + '</td><td>' + editButton + '</td></tr>';
 
                           }
                         } // end of table entities loop
@@ -2589,8 +2589,7 @@
                       
                       if(lockedItemsClient[spo_key]){
                         editButton = '<button id=' + spo_key + ' disabled class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
-                        
-                        is_subject_edit = true;
+                        concept_being_edited = true;
                       }
                       else {
                         editButton = '<button id=' + spo_key + ' class="ui button alleditbuttons" onclick="editF('+ subject_value + ',' + predicate_value + ',' + obj_value + ')">Edit</button>';
@@ -2766,7 +2765,7 @@
                       });
 
                       // added by zaib
-                      if (is_subject_edit){
+                      if (concept_being_edited){
                         $(".alleditbuttons").attr("disabled", true);
                       }
 
@@ -3026,15 +3025,11 @@
                       siiimpleToast.alert("Locked for Editing");
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
-                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
                       // console.log(socket.id);
 
                       if ($("#spo_key")){
                         $("#spo_key").attr("disabled", true);
-
-                        if (is_subject_edit){
-                          $(".alleditbuttons").attr("disabled", true);
-                        }
+                        $(".alleditbuttons").attr("disabled", true);
                       }
 
                     });
@@ -3047,14 +3042,9 @@
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
 
-                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
-
                       if ($("#spo_key")){
                         $("#spo_key").attr("disabled", false);
-
-                        if (is_subject_edit){
-                          $(".alleditbuttons").attr("disabled", false);
-                        }
+                        $(".alleditbuttons").attr("disabled", false);
                       }
 
                       if (global_var_query) {
@@ -3099,14 +3089,9 @@
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
 
-                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
-
                       if ($("#spo_key")){
                         $("#spo_key").attr("disabled", false);
-
-                        if (is_subject_edit){
-                          $(".alleditbuttons").attr("disabled", false);
-                        }
+                        $(".alleditbuttons").attr("disabled", false);
                       }
 
                     });
@@ -3125,16 +3110,11 @@
                       }
 
                       var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
-
-                      is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
                       
                       // siiimpleToast.message('User Cancelled Editing');
                       if ($("#spo_key")){
                         $("#spo_key").attr("disabled", false);
-                        
-                        if (is_subject_edit){
-                          $(".alleditbuttons").attr("disabled", false);
-                        }
+                        $(".alleditbuttons").attr("disabled", false);
                       }
 
                     });
