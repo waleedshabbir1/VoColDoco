@@ -67,7 +67,7 @@ io.on('connection', function(client) {
 
   });
 
-  client.on('editCompleted', function(subject_value, predicate_value, obj_value) {
+  client.on('editCompleted', function(subject_value, predicate_value, obj_value, new_subject) {
     log_arr.unshift('editCompleted');
 
     var spo_key = [subject_value, predicate_value, md5(obj_value)].join(SEPARATOR);
@@ -76,7 +76,7 @@ io.on('connection', function(client) {
     log_arr.unshift("editCompleted");
     log_arr.unshift(lockedItemsServer);
    
-    io.emit('itemUnlocked_editCompleted', subject_value, predicate_value, obj_value, lockedItemsServer);
+    io.emit('itemUnlocked_editCompleted', subject_value, predicate_value, obj_value, new_subject, lockedItemsServer);
 
   });
 
