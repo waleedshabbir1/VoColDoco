@@ -17,6 +17,133 @@ var escapeHtml = require('escape-html');
 var endpoint = 'http:\//localhost:' + (process.argv[3] || 3030) +
   '/dataset/sparql';
 
+///////////////////////////////////////////
+// Waleed Code Starts
+///////////////////////////////////////////
+
+// CONSTANTS
+var SEPARATOR = "&_sep_&"
+
+// Socket io
+var server = require('http').createServer(app); 
+var io = require('socket.io')(server); 
+var md5 = require('md5');
+var lockedItemsServer = {};
+var log_arr = [];
+
+// when a client connects, do this
+io.on('connection', function(client) {
+
+  console.log('Client connected...');
+
+  client.on('connectedToServer', function(data) {
+    // send the currently locked items to all connected clients
+    io.emit('initialState', lockedItemsServer)
+
+  });
+
+  client.on('editStarted', function(subject_value, predicate_value, obj_value, socket_id) {
+    //time expiry adding 1 minute in current time
+    lockExpiryTime = Date.now() + (1000*60); 
+    // console.log('element time'+time);
+
+    var spo_key = [subject_value, predicate_value, md5(obj_value)].join(SEPARATOR); 
+
+    // first check if already locked before locking it !
+    if(lockedItemsServer[spo_key]){
+      console.log('item already in it');
+      io.emit('editTimeout', subject_value, predicate_value, obj_value, socket_id, lockedItemsServer);
+    }
+    else{
+      lockedItemsServer[spo_key] = {'s':subject_value, 'p':predicate_value, 'o':obj_value, 'socket_id':socket_id, 'lockExpiryTime':lockExpiryTime};
+    }
+    // lockedItemsServer[spo_key] = {'s':subject_value, 'p':predicate_value, 'o':obj_value, 'socket_id':socket_id, 'lockExpiryTime':lockExpiryTime};
+
+    log_arr.unshift("lockedItemsServerBefore");
+    log_arr.unshift(lockedItemsServer);
+    log_arr.unshift(spo_key);
+
+    io.emit('itemLocked', subject_value, predicate_value, obj_value, lockedItemsServer);
+
+  });
+
+  client.on('editCompleted', function(subject_value, predicate_value, obj_value, new_subject) {
+    log_arr.unshift('editCompleted');
+
+    var spo_key = [subject_value, predicate_value, md5(obj_value)].join(SEPARATOR);
+    delete lockedItemsServer[spo_key];
+    
+    log_arr.unshift("editCompleted");
+    log_arr.unshift(lockedItemsServer);
+   
+    io.emit('itemUnlocked_editCompleted', subject_value, predicate_value, obj_value, new_subject, lockedItemsServer);
+
+  });
+
+
+  client.on('editCanceled', function(subject_value,predicate_value,obj_value, socket_id) {
+    log_arr.unshift('editCanceled');
+
+    var spo_key = [subject_value, predicate_value, md5(obj_value)].join(SEPARATOR);
+    delete lockedItemsServer[spo_key];
+
+    log_arr.unshift("editCanceled");
+    log_arr.unshift(lockedItemsServer);
+
+    io.emit('itemUnlocked_editCanceled', subject_value, predicate_value, obj_value, lockedItemsServer);
+
+  });
+  
+});
+
+io.listen(3060);
+
+// tmp logger
+setInterval(function() {
+  for (let i = 0; i < log_arr.length; i++) {
+    console.log(log_arr.pop(0));
+  }
+}, 10);
+
+setInterval(function() {
+  var current_time = Date.now();
+  console.log('hello timer current time: ' + current_time);
+  Object.keys(lockedItemsServer).forEach(function (item_key) {
+    // console.log(item_key); // key
+    // console.log(lockedItemsServer[item_key].lockExpiryTime); // value
+    if (current_time > lockedItemsServer[item_key].lockExpiryTime) {
+      console.log('Time expired for Item, delete it from lockedItemsServer');
+
+      var client_socket_id = lockedItemsServer[item_key].socket_id;
+      var subject_value = lockedItemsServer[item_key].s;
+      var predicate_value = lockedItemsServer[item_key].p;
+      var obj_value = lockedItemsServer[item_key].o;
+      delete lockedItemsServer[item_key];
+
+      // update the changes in locked items on every client
+      io.emit('editTimeout', subject_value, predicate_value, obj_value, client_socket_id, lockedItemsServer);
+    }
+    else{
+      console.log('time not expired for ontologies. Keep Storing it')
+    }
+  });
+
+  }, 10000);
+  
+  function RemoveNode(id) {
+    return lockedItemsServer.filter(function(emp) {
+        if (emp.id == id) {
+            return false;
+        }
+        return true;
+    });
+}
+
+///////////////////////////////////////////
+// Waleed Code Ends
+///////////////////////////////////////////
+
+
 // to re-write the namedgraph lists to be added to the query
 var namedGraphsString4Qurery = "";
 var RDFConceptsJson = [];
@@ -461,7 +588,6 @@ function replaceWithRDFType(RDFType) {
     return trim(RDFType);
 }
 
-
 function uniquefileNames(array) {
   var out = [];
   var sl = array;
@@ -496,7 +622,6 @@ function SortConcepts(x, y) {
       1 : -1));
 }
 
-
 // filter external classes
 function filterExternalConcept(RDFObjects) {
   var out = [];
@@ -528,7 +653,6 @@ function findURI(array, item) {
   }
   return array[i].URI;
 }
-
 
 router.get(['/', '/:instanceID/:branchName'], function(req, res) {
   if (!req.session.isAuthenticated && req.app.locals.authRequired)
@@ -766,6 +890,5 @@ router.get(['/', '/:instanceID/:branchName'], function(req, res) {
   // });
   }
 });
-
 
 module.exports = router;
