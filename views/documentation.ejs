@@ -286,6 +286,7 @@
                     socket.emit('connectedToServer');
 
                     var lockedItemsClient = {};
+                    var newBuildTreeData = []
 
                     ///////////////////////////////////////////
                     // Waleed Code Ends
@@ -1200,6 +1201,7 @@
                         }
                       });
 
+                      newBuildTreeData = data;
                       // rebuild tree with the new data
                       buildTree(data);
                     }
@@ -3054,8 +3056,10 @@
                       lockedItemsClient = lockedItemsServer
                       // console.log(lockedItemsClient);
 
-                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+                      siiimpleToast.success('Edit Successful');
 
+                      var spo_key = [subject_value, predicate_value, MD5(obj_value)].join(SEPARATOR);
+                   
                       is_subject_edit = predicate_value == NONE_VALUE && obj_value == NONE_VALUE;
 
                       if (document.getElementById(spo_key)){
@@ -3065,6 +3069,53 @@
                         if (is_subject_edit){
                           $(".alleditbuttons").attr("disabled", false);
                         }
+                      }
+
+                      if (new_subject != NONE_VALUE){
+                        var new_subject_text = new_subject.match(/\/([^\/]+)\/?$/)[1];
+                        console.log(new_subject);
+                        
+                        var z
+                        for (z=0;z<newBuildTreeData.length;z++){
+                          // console.log(newBuildTreeData[z].URI);
+                          // console.log(new_subject);
+                          if(newBuildTreeData[z].URI == subject_value){
+                            newBuildTreeData[z].URI = new_subject;
+                            newBuildTreeData[z].text = new_subject_text;
+                            newBuildTreeData[z].concept = new_subject_text;
+                            console.log(newBuildTreeData[z].URI);
+                            console.log(new_subject);
+                          }
+                        }
+
+                        var x
+                        for (x=0;x<RDFSData.length;x++){
+                          // console.log(newBuildTreeData[z].URI);
+                          // console.log(new_subject);
+                          if(RDFSData[x].URI == subject_value){
+                            RDFSData[x].URI = new_subject;
+                            RDFSData[x].text = new_subject_text;
+                            RDFSData[x].concept = new_subject_text;
+                            console.log(RDFSData[x].URI);
+                            console.log(new_subject);
+                          }
+                        }
+
+                        var a
+                        for (a=0;a<currentTreeData.length;a++){
+                          // console.log(newBuildTreeData[z].URI);
+                          // console.log(new_subject);
+                          if(currentTreeData[a].URI == subject_value){
+                            currentTreeData[a].URI = new_subject;
+                            currentTreeData[a].text = new_subject_text;
+                            currentTreeData[a].concept = new_subject_text;
+                            console.log(currentTreeData[a].URI);
+                            console.log(new_subject);
+                          }
+                        }
+
+                        buildTree(newBuildTreeData);
+
                       }
 
                       if (global_var_query) {
